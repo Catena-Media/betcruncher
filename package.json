@@ -10,7 +10,11 @@
       {
           "name": "Howard Yeend",
           "email": "howard.yeend@gmail.com"
-      }
+      },
+      {
+          "name": "Mike Hall",
+          "email": "mikehall314@gmail.com"
+      },
   ],
   "scripts": {
     "test": "nodeunit test"
