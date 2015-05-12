@@ -14,7 +14,7 @@
       {
           "name": "Mike Hall",
           "email": "mikehall314@gmail.com"
-      },
+      }
   ],
   "scripts": {
     "test": "nodeunit test"
