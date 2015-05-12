@@ -1,0 +1,26 @@
+{
+  "name": "betcruncher",
+  "version": "1.0.0",
+  "description": "A betting calculator engine",
+  "author": {
+    "name": "twistdigital",
+    "contact": "contact@twistdigital.co.uk"
+  },
+  "contributors": [
+      {
+          "name": "Howard Yeend",
+          "email": "howard.yeend@gmail.com"
+      }
+  ],
+  "scripts": {
+    "test": "nodeunit test"
+  },
+  "main": "lib/betcruncher.js",
+  "files": [
+      "lib"
+  ],
+  "license": "GPLv2",
+  "devDependencies": {
+    "nodeunit": "^0.9.1"
+  }
+}
