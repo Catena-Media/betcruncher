@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/digitaldesignlabs/betcruncher.svg?branch=master)](https://travis-ci.org/digitaldesignlabs/betcruncher)
+
 Betcruncher
 ===========
 
