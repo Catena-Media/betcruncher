@@ -1,1660 +1,1492 @@
-/*jslint node: true, maxlen: 120 */
-
 "use strict";
 
-var betcruncher, converter;
+const test = require("tape");
 
-converter   = require("../lib/oddsconverter");
-betcruncher = require("../lib/betcruncher");
+const converter = require("../lib/oddsconverter");
+const betcruncher = require("../lib/betcruncher");
 
 // Odds conversion tests
-exports.testFractional = function (test) {
+test("Convert Fractions", assert => {
 
-    var converted;
+    assert.plan(4);
 
-    test.expect(4);
+    const converted = converter("10/1");
 
-    converted = converter("10/1");
+    assert.equal(converted.originalFormat, "fractional", "Detect fractional odds");
+    assert.equal(converted.fractional, "10/1", "Converts fractional to fractional");
+    assert.equal(converted.decimal, 11.0, "Converts fractional to decimal");
+    assert.equal(converted.american, "+1000", "Converts fractional to american");
 
-    test.strictEqual(converted.originalFormat, "fractional", "Failed to detect fractional odds");
-    test.strictEqual(converted.fractional, "10/1", "Failed to convert fractional to fractional");
-    test.strictEqual(converted.decimal, 11.0, "Failed to convert fractional to decimal");
-    test.strictEqual(converted.american, "+1000", "Failed to convert fractional to american");
+    assert.end();
+});
 
-    test.done();
-};
+test("Convert Bogus Fractions", assert => {
 
-exports.testBogusFractional = function (test) {
+    assert.plan(7);
 
-    test.expect(7);
+    assert.throws(_ => converter("a/f"), "Bogus fraction throws: a/f");
+    assert.throws(_ => converter("a/1"), "Bogus fraction throws: a/1");
+    assert.throws(_ => converter("10/z"), "Bogus fraction throws: 10/z");
+    assert.throws(_ => converter("/1"), "Bogus fraction throws: /1");
+    assert.throws(_ => converter("10/"), "Bogus fraction throws: 10/");
+    assert.throws(_ => converter("/"), "Bogus fraction throws: /");
+    assert.throws(_ => converter("0/0"), "Bogus fraction throws: 0/0");
 
-    test.throws(function () {
-        converter("a/f");
-    }, Error, "Bogus fraction failed to throw: a/f");
+    assert.end();
+});
 
-    test.throws(function () {
-        converter("a/1");
-    }, Error, "Bogus fraction failed to throw: a/1");
+test("Convert Decimal", assert => {
 
-    test.throws(function () {
-        converter("10/z");
-    }, Error, "Bogus fraction failed to throw: 10/z");
+    assert.plan(4);
 
-    test.throws(function () {
-        converter("/1");
-    }, Error, "Bogus fraction failed to throw: /1");
+    const converted = converter(6);
 
-    test.throws(function () {
-        converter("10/");
-    }, Error, "Bogus fraction failed to throw: 10/");
+    assert.equal(converted.originalFormat, "decimal", "Detect decimal odds");
+    assert.equal(converted.fractional, "5/1", "Convert decimal to fractional");
+    assert.equal(converted.decimal, 6.0, "Convert decimal to decimal");
+    assert.equal(converted.american, "+500", "Convert decimal to american");
 
-    test.throws(function () {
-        converter("/");
-    }, Error, "Bogus fraction failed to throw: /");
+    assert.end();
+});
 
-    test.throws(function () {
-        converter("0/0");
-    }, Error, "Bogus fraction failed to throw: 0/0");
+test("Convert Small Decimals", assert => {
 
-    test.done();
-};
+    assert.plan(4);
 
-exports.testDecimal = function (test) {
+    const converted = converter(1.5);
 
-    var converted;
+    assert.equal(converted.originalFormat, "decimal", "Detect decimal odds");
+    assert.equal(converted.fractional, "1/2", "Convert decimal to fractional");
+    assert.equal(converted.decimal, 1.5, "Convert decimal to decimal");
+    assert.equal(converted.american, "-200", "Convert decimal to american");
 
-    test.expect(4);
+    assert.end();
+});
 
-    converted = converter(6);
+test("Convert String Decimals", assert => {
 
-    test.strictEqual(converted.originalFormat, "decimal", "Failed to detect decimal odds");
-    test.strictEqual(converted.fractional, "5/1", "Failed to convert decimal to fractional");
-    test.strictEqual(converted.decimal, 6.0, "Failed to convert decimal to decimal");
-    test.strictEqual(converted.american, "+500", "Failed to convert decimal to american");
+    assert.plan(4);
 
-    test.done();
-};
+    const converted = converter("3.5");
 
-exports.testSmallDecimal = function (test) {
+    assert.equal(converted.originalFormat, "decimal", "Detect decimal odds");
+    assert.equal(converted.fractional, "5/2", "Convert decimal to fractional");
+    assert.equal(converted.decimal, 3.5, "Convert decimal to decimal");
+    assert.equal(converted.american, "+250", "Convert decimal to american");
 
-    var converted;
+    assert.end();
+});
 
-    test.expect(4);
+test("Convert Small String Decimals", assert => {
 
-    converted = converter(1.5);
+    assert.plan(4);
 
-    test.strictEqual(converted.originalFormat, "decimal", "Failed to detect decimal odds");
-    test.strictEqual(converted.fractional, "1/2", "Failed to convert decimal to fractional");
-    test.strictEqual(converted.decimal, 1.5, "Failed to convert decimal to decimal");
-    test.strictEqual(converted.american, "-200", "Failed to convert decimal to american");
+    const converted = converter("1.25");
 
-    test.done();
-};
+    assert.equal(converted.originalFormat, "decimal", "Detect decimal odds");
+    assert.equal(converted.fractional, "1/4", "Convert decimal to fractional");
+    assert.equal(converted.decimal, 1.25, "Convert decimal to decimal");
+    assert.equal(converted.american, "-400", "Convert decimal to american");
 
-exports.testStringDecimal = function (test) {
+    assert.end();
+});
 
-    var converted;
+test("Convert Bogus Decimals", assert => {
 
-    test.expect(4);
+    assert.plan(4);
 
-    converted = converter("3.5");
+    assert.throws(_ => converter("..3"), "Bogus fraction throws: ..3");
+    assert.throws(_ => converter("3.."), "Bogus fraction throws: 3..");
+    assert.throws(_ => converter(1), "Bogus fraction throws: 1");
+    assert.throws(_ => converter(0.1), "Bogus fraction throws: 0.1");
 
-    test.strictEqual(converted.originalFormat, "decimal", "Failed to detect decimal odds");
-    test.strictEqual(converted.fractional, "5/2", "Failed to convert decimal to fractional");
-    test.strictEqual(converted.decimal, 3.5, "Failed to convert decimal to decimal");
-    test.strictEqual(converted.american, "+250", "Failed to convert decimal to american");
+    assert.end();
+});
 
-    test.done();
-};
+test("Convert Positive Moneyline", assert => {
 
-exports.testSmallStringDecimal = function (test) {
+    assert.plan(4);
 
-    var converted;
+    const converted = converter("+800");
 
-    test.expect(4);
+    assert.equal(converted.originalFormat, "american", "Detect american odds");
+    assert.equal(converted.fractional, "8/1", "Convert american to fractional");
+    assert.equal(converted.decimal, 9.0, "Convert american to decimal");
+    assert.equal(converted.american, "+800", "Convert american to american");
 
-    converted = converter("1.25");
+    assert.end();
+});
 
-    test.strictEqual(converted.originalFormat, "decimal", "Failed to detect decimal odds");
-    test.strictEqual(converted.fractional, "1/4", "Failed to convert decimal to fractional");
-    test.strictEqual(converted.decimal, 1.25, "Failed to convert decimal to decimal");
-    test.strictEqual(converted.american, "-400", "Failed to convert decimal to american");
+test("Convert Negative Moneyline", assert => {
 
-    test.done();
-};
+    assert.plan(4);
 
-exports.testBogusDecimal = function (test) {
+    const converted = converter("-400");
 
-    test.expect(4);
+    assert.equal(converted.originalFormat, "american", "Detect negative american odds");
+    assert.equal(converted.fractional, "1/4", "Convert negative american to fractional");
+    assert.equal(converted.decimal, 1.25, "Convert negative american to decimal");
+    assert.equal(converted.american, "-400", "Convert negative american to american");
 
-    test.throws(function () {
-        converter("..3");
-    }, Error, "Bogus fraction failed to throw: ..3");
+    assert.end();
+});
 
-    test.throws(function () {
-        converter("3..");
-    }, Error, "Bogus fraction failed to throw: 3..");
+test("Convert Negative Moneyline Numeric", assert => {
 
-    test.throws(function () {
-        converter(1);
-    }, Error, "Bogus fraction failed to throw: 1");
+    assert.plan(4);
 
-    test.throws(function () {
-        converter(0.1);
-    }, Error, "Bogus fraction failed to throw: 0.1");
+    const converted = converter(-400);
 
-    test.done();
-};
+    assert.equal(converted.originalFormat, "american", "Detect negative american odds from number");
+    assert.equal(converted.fractional, "1/4", "Convert negative american from number to fractional");
+    assert.equal(converted.decimal, 1.25, "Convert negative american from number to decimal");
+    assert.equal(converted.american, "-400", "Convert negative american from number to american");
 
-exports.testAmericanPositive = function (test) {
+    assert.end();
+});
 
-    var converted;
+test("Convert Bogus Moneyline", assert => {
 
-    test.expect(4);
+    assert.plan(4);
 
-    converted = converter("+800");
+    assert.throws(_ => converter("+10B"), "Bogus fraction throws: +10B");
+    assert.throws(_ => converter("-XYZ"), "Bogus fraction throws: -XYZ");
+    assert.throws(_ => converter(-Infinity), "Bogus fraction throws: -Infinity");
+    assert.throws(_ => converter("+ABC"), "Bogus fraction throws: +ABC");
 
-    test.strictEqual(converted.originalFormat, "american", "Failed to detect american odds");
-    test.strictEqual(converted.fractional, "8/1", "Failed to convert american to fractional");
-    test.strictEqual(converted.decimal, 9.0, "Failed to convert american to decimal");
-    test.strictEqual(converted.american, "+800", "Failed to convert american to american");
-
-    test.done();
-};
-
-exports.testAmericanNegative = function (test) {
-
-    var converted;
-
-    test.expect(4);
-
-    converted = converter("-400");
-
-    test.strictEqual(converted.originalFormat, "american", "Failed to detect negative american odds");
-    test.strictEqual(converted.fractional, "1/4", "Failed to convert negative american to fractional");
-    test.strictEqual(converted.decimal, 1.25, "Failed to convert negative american to decimal");
-    test.strictEqual(converted.american, "-400", "Failed to convert negative american to american");
-
-    test.done();
-};
-
-exports.testAmericanNegativeNumber = function (test) {
-
-    var converted;
-
-    test.expect(4);
-
-    converted = converter(-400);
-
-    test.strictEqual(converted.originalFormat, "american", "Failed to detect negative american odds from number");
-    test.strictEqual(converted.fractional, "1/4", "Failed to convert negative american from number to fractional");
-    test.strictEqual(converted.decimal, 1.25, "Failed to convert negative american from number to decimal");
-    test.strictEqual(converted.american, "-400", "Failed to convert negative american from number to american");
-
-    test.done();
-};
-
-exports.testBogusAmerican = function (test) {
-
-    test.expect(4);
-
-    test.throws(function () {
-        converter("+10B");
-    }, Error, "Bogus fraction failed to throw: +10B");
-
-    test.throws(function () {
-        converter("-XYZ");
-    }, Error, "Bogus fraction failed to throw: -XYZ");
-
-    test.throws(function () {
-        converter(-Infinity);
-    }, Error, "Bogus fraction failed to throw: -Infinity");
-
-    test.throws(function () {
-        converter("+ABC");
-    }, Error, "Bogus fraction failed to throw: +ABC");
-
-    test.done();
-};
+    assert.end();
+});
 
 // Bet calculation tests
-exports.testNoStake = function (test) {
+test("No Stake", assert => {
 
-    var result;
+    assert.plan(3);
 
-    test.expect(3);
+    const result = betcruncher({type: "single", stake: 0, eachWay: false}, []);
 
-    result = betcruncher({ type: "single", stake: 0, eachWay: false }, []);
+    assert.equal(0, result.totalStake, "Return 0 stake from 0 stake");
+    assert.equal(0, result.returns, "Return 0 returns from 0 stake");
+    assert.equal(0, result.profit, "Return 0 profit from 0 stake");
 
-    test.strictEqual(0, result.totalStake, "Unexpected stake from 0 stake");
-    test.strictEqual(0, result.returns, "Unexpected returns from 0 stake");
-    test.strictEqual(0, result.profit, "Unexpected profit from 0 stake");
+    assert.end();
+});
 
-    test.done();
-};
+test("Single", assert => {
 
-exports.testSingle = function (test) {
+    assert.plan(3);
 
-    var runners, result;
-
-    test.expect(3);
-
-    runners = [
-        { odds: "10/1", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "10/1", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "single", stake: 5, eachWay: false }, runners);
+    const result = betcruncher({type: "single", stake: 5, eachWay: false}, runners);
 
-    test.strictEqual(5, result.totalStake, "Unexpected total stake value. Expected 5, saw " + result.totalStake);
-    test.strictEqual(55, result.returns, "Unexpected return value. Expected 55, saw " + result.returns);
-    test.strictEqual(50, result.profit, "Unexpected profit value. Expected 50, saw " + result.profit);
+    assert.equal(5, result.totalStake, "Total stake returns 5");
+    assert.equal(55, result.returns, "Returns are 55");
+    assert.equal(50, result.profit, "Profit is 50");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testDouble = function (test) {
+test("Double", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "double", stake: 8, eachWay: false }, runners);
+    const result = betcruncher({type: "double", stake: 8, eachWay: false}, runners);
 
-    test.strictEqual(8, result.totalStake, "Unexpected total stake value. Expected 8, saw " + result.totalStake);
-    test.strictEqual(160, result.returns, "Unexpected return value. Expected 160, saw " + result.returns);
-    test.strictEqual(152, result.profit, "Unexpected profit value. Expected 152, saw " + result.profit);
+    assert.equal(8, result.totalStake, "Expect total stake to be 8");
+    assert.equal(160, result.returns, "Expect return to be 160");
+    assert.equal(152, result.profit, "Expect profit to be 152");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testTreble = function (test) {
+test("Treble", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/4", position: 1 },
-        { odds: "7/2", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/4", position: 1},
+        {odds: "7/2", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "treble", stake: 13, eachWay: false }, runners);
+    const result = betcruncher({type: "treble", stake: 13, eachWay: false}, runners);
 
-    test.strictEqual(13, result.totalStake, "Unexpected total stake value. Expected 13, saw " + result.totalStake);
-    test.strictEqual(1170, result.returns, "Unexpected return value. Expected 1170, saw " + result.returns);
-    test.strictEqual(1157, result.profit, "Unexpected profit value. Expected 1157, saw " + result.profit);
+    assert.equal(13, result.totalStake, "Expect total stake to be 13");
+    assert.equal(1170, result.returns, "Expect return to be 1170");
+    assert.equal(1157, result.profit, "Expect profit to be 1157");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testFourFold = function (test) {
+test("Fourfold", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "10/1", terms: "1/4", position: 1 },
-        { odds: "5/1", terms: "1/4", position: 1 },
-        { odds: "100/30", terms: "1/4", position: 1 },
-        { odds: "1/4", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "10/1", terms: "1/4", position: 1},
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "100/30", terms: "1/4", position: 1},
+        {odds: "1/4", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "fourfold", stake: 12, eachWay: false }, runners);
+    const result = betcruncher({type: "fourfold", stake: 12, eachWay: false}, runners);
 
-    test.strictEqual(12, result.totalStake, "Unexpected total stake value. Expected 12, saw " + result.totalStake);
-    test.strictEqual(4290, result.returns, "Unexpected return value. Expected 4290, saw " + result.returns);
-    test.strictEqual(4278, result.profit, "Unexpected profit value. Expected 4278, saw " + result.profit);
+    assert.equal(12, result.totalStake, "Expect total stake to be 12");
+    assert.equal(4290, result.returns, "Expect return to be 4290");
+    assert.equal(4278, result.profit, "Expect profit to be 4278");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testFiveFold = function (test) {
+test("Fivefold", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "2/1", terms: "1/4", position: 1 },
-        { odds: "1/1", terms: "1/4", position: 1 },
-        { odds: "8/1", terms: "1/4", position: 1 },
-        { odds: "2/5", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "2/1", terms: "1/4", position: 1},
+        {odds: "1/1", terms: "1/4", position: 1},
+        {odds: "8/1", terms: "1/4", position: 1},
+        {odds: "2/5", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "fivefold", stake: 4, eachWay: false }, runners);
+    const result = betcruncher({type: "fivefold", stake: 4, eachWay: false}, runners);
 
-    test.strictEqual(4, result.totalStake, "Unexpected total stake value. Expected 4, saw " + result.totalStake);
-    test.strictEqual(1512, result.returns, "Unexpected return value. Expected 1512, saw " + result.returns);
-    test.strictEqual(1508, result.profit, "Unexpected profit value. Expected 1508, saw " + result.profit);
+    assert.equal(4, result.totalStake, "Expect total stake to be 4");
+    assert.equal(1512, result.returns, "Expect return to be 1512");
+    assert.equal(1508, result.profit, "Expect profit to be 1508");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testSixFold = function (test) {
+test("Sixfold", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/4", position: 1 },
-        { odds: "5/1", terms: "1/4", position: 1 },
-        { odds: "6/1", terms: "1/4", position: 1 },
-        { odds: "7/1", terms: "1/4", position: 1 },
-        { odds: "8/1", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/4", position: 1},
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "6/1", terms: "1/4", position: 1},
+        {odds: "7/1", terms: "1/4", position: 1},
+        {odds: "8/1", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "sixfold", stake: 2, eachWay: false }, runners);
+    const result = betcruncher({type: "sixfold", stake: 2, eachWay: false}, runners);
 
-    test.strictEqual(2, result.totalStake, "Unexpected total stake value. Expected 2, saw " + result.totalStake);
-    test.strictEqual(120960, result.returns, "Unexpected return value. Expected 120960, saw " + result.returns);
-    test.strictEqual(120958, result.profit, "Unexpected profit value. Expected 120958, saw " + result.profit);
+    assert.equal(2, result.totalStake, "Expect total stake to be 2");
+    assert.equal(120960, result.returns, "Expect return to be 120960");
+    assert.equal(120958, result.profit, "Expect profit to be 120958");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testSevenFold = function (test) {
+test("Sevenfold", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "1/1", terms: "1/4", position: 1 },
-        { odds: "3/1", terms: "1/4", position: 1 },
-        { odds: "5/1", terms: "1/4", position: 1 },
-        { odds: "7/1", terms: "1/4", position: 1 },
-        { odds: "9/1", terms: "1/4", position: 1 },
-        { odds: "11/1", terms: "1/4", position: 1 },
-        { odds: "15/1", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "1/1", terms: "1/4", position: 1},
+        {odds: "3/1", terms: "1/4", position: 1},
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "7/1", terms: "1/4", position: 1},
+        {odds: "9/1", terms: "1/4", position: 1},
+        {odds: "11/1", terms: "1/4", position: 1},
+        {odds: "15/1", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "sevenfold", stake: 5.5, eachWay: false }, runners);
+    const result = betcruncher({type: "sevenfold", stake: 5.5, eachWay: false}, runners);
 
-    test.strictEqual(5.5, result.totalStake, "Unexpected total stake value. Expected 5.5, saw " + result.totalStake);
-    test.strictEqual(4055040, result.returns, "Unexpected return value. Expected 4055040, saw " + result.returns);
-    test.strictEqual(4055034.5, result.profit, "Unexpected profit value. Expected 4055034.5, saw " + result.profit);
+    assert.equal(5.5, result.totalStake, "Expect total stake to be 5.5");
+    assert.equal(4055040, result.returns, "Expect return to be 4055040");
+    assert.equal(4055034.5, result.profit, "Expect profit to be 4055034.5");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEightFold = function (test) {
+test("Eightfold", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "2/1", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/4", position: 1 },
-        { odds: "6/1", terms: "1/4", position: 1 },
-        { odds: "8/1", terms: "1/4", position: 1 },
-        { odds: "7/2", terms: "1/4", position: 1 },
-        { odds: "5/2", terms: "1/4", position: 1 },
-        { odds: "3/2", terms: "1/4", position: 1 },
-        { odds: "2/3", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "2/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/4", position: 1},
+        {odds: "6/1", terms: "1/4", position: 1},
+        {odds: "8/1", terms: "1/4", position: 1},
+        {odds: "7/2", terms: "1/4", position: 1},
+        {odds: "5/2", terms: "1/4", position: 1},
+        {odds: "3/2", terms: "1/4", position: 1},
+        {odds: "2/3", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "eightfold", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "eightfold", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(6201562.5, result.returns, "Unexpected return value. Expected 6201562.5, saw " + result.returns);
-    test.strictEqual(6201462.5, result.profit, "Unexpected profit value. Expected 6201462.5, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(6201562.5, result.returns, "Expect return to be 6201562.5");
+    assert.equal(6201462.5, result.profit, "Expect profit to be 6201462.5");
 
-    test.done();
-};
+    assert.end();
+});
 
 // Losing wagers
 
-exports.testSingleLoser = function (test) {
+test("Single Loser", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "10/1", terms: "1/4", position: 0 }
+    const runners = [
+        {odds: "10/1", terms: "1/4", position: 0}
     ];
 
-    result = betcruncher({ type: "single", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "single", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(0, result.returns, "Unexpected return value. Expected 0, saw " + result.returns);
-    test.strictEqual(-100, result.profit, "Unexpected profit value. Expected -100, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(0, result.returns, "Expect return to be 0");
+    assert.equal(-100, result.profit, "Expect profit to be -100");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testDoubleLoser = function (test) {
+test("Double Loser", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/4", position: 0 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/4", position: 0}
     ];
 
-    result = betcruncher({ type: "double", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "double", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(0, result.returns, "Unexpected return value. Expected 0, saw " + result.returns);
-    test.strictEqual(-100, result.profit, "Unexpected profit value. Expected -100, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(0, result.returns, "Expect return to be 0");
+    assert.equal(-100, result.profit, "Expect profit to be -100");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testTrebleLoser = function (test) {
+test("Treble Loser", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: 0 },
-        { odds: "4/1", terms: "1/4", position: 0 },
-        { odds: "7/2", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: 0},
+        {odds: "4/1", terms: "1/4", position: 0},
+        {odds: "7/2", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "treble", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "treble", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(0, result.returns, "Unexpected return value. Expected 0, saw " + result.returns);
-    test.strictEqual(-100, result.profit, "Unexpected profit value. Expected -100, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(0, result.returns, "Expect return to be 0");
+    assert.equal(-100, result.profit, "Expect profit to be -100");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testFourFoldLoser = function (test) {
+test("Fourfold Loser", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "10/1", terms: "1/4", position: 1 },
-        { odds: "5/1", terms: "1/4", position: 1 },
-        { odds: "100/30", terms: "1/4", position: 0 },
-        { odds: "1/4", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "10/1", terms: "1/4", position: 1},
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "100/30", terms: "1/4", position: 0},
+        {odds: "1/4", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "fourfold", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "fourfold", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(0, result.returns, "Unexpected return value. Expected 0, saw " + result.returns);
-    test.strictEqual(-100, result.profit, "Unexpected profit value. Expected -100, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(0, result.returns, "Expect return to be 0");
+    assert.equal(-100, result.profit, "Expect profit to be -100");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testFiveFoldLoser = function (test) {
+test("Fivefold Loser", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "2/1", terms: "1/4", position: 1 },
-        { odds: "1/1", terms: "1/4", position: 0 },
-        { odds: "8/1", terms: "1/4", position: 1 },
-        { odds: "2/5", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "2/1", terms: "1/4", position: 1},
+        {odds: "1/1", terms: "1/4", position: 0},
+        {odds: "8/1", terms: "1/4", position: 1},
+        {odds: "2/5", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "fivefold", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "fivefold", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(0, result.returns, "Unexpected return value. Expected 0, saw " + result.returns);
-    test.strictEqual(-100, result.profit, "Unexpected profit value. Expected -100, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(0, result.returns, "Expect return to be 0");
+    assert.equal(-100, result.profit, "Expect profit to be -100");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testSixFoldLoser = function (test) {
+test("Sixfold Loser", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/4", position: 0 },
-        { odds: "5/1", terms: "1/4", position: 1 },
-        { odds: "6/1", terms: "1/4", position: 1 },
-        { odds: "7/1", terms: "1/4", position: 1 },
-        { odds: "8/1", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/4", position: 0},
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "6/1", terms: "1/4", position: 1},
+        {odds: "7/1", terms: "1/4", position: 1},
+        {odds: "8/1", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "sixfold", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "sixfold", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(0, result.returns, "Unexpected return value. Expected 0, saw " + result.returns);
-    test.strictEqual(-100, result.profit, "Unexpected profit value. Expected -100, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(0, result.returns, "Expect return to be 0");
+    assert.equal(-100, result.profit, "Expect profit to be -100");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testSevenFoldLoser = function (test) {
+test("Sevenfold Loser", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "1/1", terms: "1/4", position: 1 },
-        { odds: "3/1", terms: "1/4", position: 1 },
-        { odds: "5/1", terms: "1/4", position: 0 },
-        { odds: "7/1", terms: "1/4", position: 1 },
-        { odds: "9/1", terms: "1/4", position: 1 },
-        { odds: "11/1", terms: "1/4", position: 0 },
-        { odds: "15/1", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "1/1", terms: "1/4", position: 1},
+        {odds: "3/1", terms: "1/4", position: 1},
+        {odds: "5/1", terms: "1/4", position: 0},
+        {odds: "7/1", terms: "1/4", position: 1},
+        {odds: "9/1", terms: "1/4", position: 1},
+        {odds: "11/1", terms: "1/4", position: 0},
+        {odds: "15/1", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "sevenfold", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "sevenfold", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(0, result.returns, "Unexpected return value. Expected 0, saw " + result.returns);
-    test.strictEqual(-100, result.profit, "Unexpected profit value. Expected -100, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(0, result.returns, "Expect return to be 0");
+    assert.equal(-100, result.profit, "Expect profit to be -100");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEightFoldLoser = function (test) {
+test("Eightfold Loser", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "2/1", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/4", position: 0 },
-        { odds: "6/1", terms: "1/4", position: 1 },
-        { odds: "8/1", terms: "1/4", position: 1 },
-        { odds: "7/2", terms: "1/4", position: 0 },
-        { odds: "5/2", terms: "1/4", position: 1 },
-        { odds: "3/2", terms: "1/4", position: 1 },
-        { odds: "2/3", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "2/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/4", position: 0},
+        {odds: "6/1", terms: "1/4", position: 1},
+        {odds: "8/1", terms: "1/4", position: 1},
+        {odds: "7/2", terms: "1/4", position: 0},
+        {odds: "5/2", terms: "1/4", position: 1},
+        {odds: "3/2", terms: "1/4", position: 1},
+        {odds: "2/3", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "eightfold", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "eightfold", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(0, result.returns, "Unexpected return value. Expected 0, saw " + result.returns);
-    test.strictEqual(-100, result.profit, "Unexpected profit value. Expected -100, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(0, result.returns, "Expect return to be 0");
+    assert.equal(-100, result.profit, "Expect profit to be -100");
 
-    test.done();
-};
+    assert.end();
+});
 
 // Void wagers
 
-exports.testSingleVoid = function (test) {
+test("Single Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "10/1", terms: "1/4", position: -1 }
+    const runners = [
+        {odds: "10/1", terms: "1/4", position: -1}
     ];
 
-    result = betcruncher({ type: "single", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "single", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(100, result.returns, "Unexpected return value. Expected 100, saw " + result.returns);
-    test.strictEqual(0, result.profit, "Unexpected profit value. Expected 0, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(100, result.returns, "Expect return to be 100");
+    assert.equal(0, result.profit, "Expect profit to be 0");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testDoubleVoid = function (test) {
+test("Double Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: -1 },
-        { odds: "4/1", terms: "1/4", position: -1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/4", position: -1}
     ];
 
-    result = betcruncher({ type: "double", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "double", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(100, result.returns, "Unexpected return value. Expected 100, saw " + result.returns);
-    test.strictEqual(0, result.profit, "Unexpected profit value. Expected 0, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(100, result.returns, "Expect return to be 100");
+    assert.equal(0, result.profit, "Expect profit to be 0");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testTrebleVoid = function (test) {
+test("Treble Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: -1 },
-        { odds: "4/1", terms: "1/4", position: -1 },
-        { odds: "7/2", terms: "1/4", position: -1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/4", position: -1},
+        {odds: "7/2", terms: "1/4", position: -1}
     ];
 
-    result = betcruncher({ type: "treble", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "treble", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(100, result.returns, "Unexpected return value. Expected 100, saw " + result.returns);
-    test.strictEqual(0, result.profit, "Unexpected profit value. Expected 0, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(100, result.returns, "Expect return to be 100");
+    assert.equal(0, result.profit, "Expect profit to be 0");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testFourFoldVoid = function (test) {
+test("Fourfold Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "10/1", terms: "1/4", position: -1 },
-        { odds: "5/1", terms: "1/4", position: -1 },
-        { odds: "100/30", terms: "1/4", position: -1 },
-        { odds: "1/4", terms: "1/4", position: -1 }
+    const runners = [
+        {odds: "10/1", terms: "1/4", position: -1},
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "100/30", terms: "1/4", position: -1},
+        {odds: "1/4", terms: "1/4", position: -1}
     ];
 
-    result = betcruncher({ type: "fourfold", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "fourfold", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(100, result.returns, "Unexpected return value. Expected 100, saw " + result.returns);
-    test.strictEqual(0, result.profit, "Unexpected profit value. Expected 0, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(100, result.returns, "Expect return to be 100");
+    assert.equal(0, result.profit, "Expect profit to be 0");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testFiveFoldVoid = function (test) {
+test("Fivefold Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "2/1", terms: "1/4", position: -1 },
-        { odds: "1/1", terms: "1/4", position: -1 },
-        { odds: "8/1", terms: "1/4", position: -1 },
-        { odds: "2/5", terms: "1/4", position: -1 },
-        { odds: "4/1", terms: "1/4", position: -1 }
+    const runners = [
+        {odds: "2/1", terms: "1/4", position: -1},
+        {odds: "1/1", terms: "1/4", position: -1},
+        {odds: "8/1", terms: "1/4", position: -1},
+        {odds: "2/5", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/4", position: -1}
     ];
 
-    result = betcruncher({ type: "fivefold", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "fivefold", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(100, result.returns, "Unexpected return value. Expected 100, saw " + result.returns);
-    test.strictEqual(0, result.profit, "Unexpected profit value. Expected 0, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(100, result.returns, "Expect return to be 100");
+    assert.equal(0, result.profit, "Expect profit to be 0");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testSixFoldVoid = function (test) {
+test("Sixfold Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: -1 },
-        { odds: "4/1", terms: "1/4", position: -1 },
-        { odds: "5/1", terms: "1/4", position: -1 },
-        { odds: "6/1", terms: "1/4", position: -1 },
-        { odds: "7/1", terms: "1/4", position: -1 },
-        { odds: "8/1", terms: "1/4", position: -1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/4", position: -1},
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "6/1", terms: "1/4", position: -1},
+        {odds: "7/1", terms: "1/4", position: -1},
+        {odds: "8/1", terms: "1/4", position: -1}
     ];
 
-    result = betcruncher({ type: "sixfold", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "sixfold", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(100, result.returns, "Unexpected return value. Expected 100, saw " + result.returns);
-    test.strictEqual(0, result.profit, "Unexpected profit value. Expected 0, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(100, result.returns, "Expect return to be 100");
+    assert.equal(0, result.profit, "Expect profit to be 0");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testSevenFoldVoid = function (test) {
+test("Sevenfold Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "1/1", terms: "1/4", position: -1 },
-        { odds: "3/1", terms: "1/4", position: -1 },
-        { odds: "5/1", terms: "1/4", position: -1 },
-        { odds: "7/1", terms: "1/4", position: -1 },
-        { odds: "9/1", terms: "1/4", position: -1 },
-        { odds: "11/1", terms: "1/4", position: -1 },
-        { odds: "15/1", terms: "1/4", position: -1 }
+    const runners = [
+        {odds: "1/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "7/1", terms: "1/4", position: -1},
+        {odds: "9/1", terms: "1/4", position: -1},
+        {odds: "11/1", terms: "1/4", position: -1},
+        {odds: "15/1", terms: "1/4", position: -1}
     ];
 
-    result = betcruncher({ type: "sevenfold", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "sevenfold", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(100, result.returns, "Unexpected return value. Expected 100, saw " + result.returns);
-    test.strictEqual(0, result.profit, "Unexpected profit value. Expected 0, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(100, result.returns, "Expect return to be 100");
+    assert.equal(0, result.profit, "Expect profit to be 0");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEightFoldVoid = function (test) {
+test("Eightfold Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "2/1", terms: "1/4", position: -1 },
-        { odds: "4/1", terms: "1/4", position: -1 },
-        { odds: "6/1", terms: "1/4", position: -1 },
-        { odds: "8/1", terms: "1/4", position: -1 },
-        { odds: "7/2", terms: "1/4", position: -1 },
-        { odds: "5/2", terms: "1/4", position: -1 },
-        { odds: "3/2", terms: "1/4", position: -1 },
-        { odds: "2/3", terms: "1/4", position: -1 }
+    const runners = [
+        {odds: "2/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/4", position: -1},
+        {odds: "6/1", terms: "1/4", position: -1},
+        {odds: "8/1", terms: "1/4", position: -1},
+        {odds: "7/2", terms: "1/4", position: -1},
+        {odds: "5/2", terms: "1/4", position: -1},
+        {odds: "3/2", terms: "1/4", position: -1},
+        {odds: "2/3", terms: "1/4", position: -1}
     ];
 
-    result = betcruncher({ type: "eightfold", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "eightfold", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(100, result.returns, "Unexpected return value. Expected 100, saw " + result.returns);
-    test.strictEqual(0, result.profit, "Unexpected profit value. Expected 0, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(100, result.returns, "Expect return to be 100");
+    assert.equal(0, result.profit, "Expect profit to be 0");
 
-    test.done();
-};
+    assert.end();
+});
 
 
 // Part void wagers
 
-exports.testDoublePartVoid = function (test) {
+test("Double Part Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: -1 },
-        { odds: "4/1", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "double", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "double", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(500, result.returns, "Unexpected return value. Expected 500, saw " + result.returns);
-    test.strictEqual(400, result.profit, "Unexpected profit value. Expected 40080, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(500, result.returns, "Expect return to be 500");
+    assert.equal(400, result.profit, "Expect profit to be 40080");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testTreblePartVoid = function (test) {
+test("Treble Part Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: -1 },
-        { odds: "4/1", terms: "1/4", position: -1 },
-        { odds: "7/2", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/4", position: -1},
+        {odds: "7/2", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "treble", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "treble", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(450, result.returns, "Unexpected return value. Expected 450, saw " + result.returns);
-    test.strictEqual(350, result.profit, "Unexpected profit value. Expected 350, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(450, result.returns, "Expect return to be 450");
+    assert.equal(350, result.profit, "Expect profit to be 350");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testFourFoldPartVoid = function (test) {
+test("Fourfold Part Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "10/1", terms: "1/4", position: 1 },
-        { odds: "5/1", terms: "1/4", position: 1 },
-        { odds: "100/30", terms: "1/4", position: -1 },
-        { odds: "1/4", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "10/1", terms: "1/4", position: 1},
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "100/30", terms: "1/4", position: -1},
+        {odds: "1/4", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "fourfold", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "fourfold", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(8250, result.returns, "Unexpected return value. Expected 8250, saw " + result.returns);
-    test.strictEqual(8150, result.profit, "Unexpected profit value. Expected 8150, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(8250, result.returns, "Expect return to be 8250");
+    assert.equal(8150, result.profit, "Expect profit to be 8150");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testFiveFoldPartVoid = function (test) {
+test("Fivefold Part Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "2/1", terms: "1/4", position: -1 },
-        { odds: "1/1", terms: "1/4", position: 1 },
-        { odds: "8/1", terms: "1/4", position: 1 },
-        { odds: "2/5", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/4", position: -1 }
+    const runners = [
+        {odds: "2/1", terms: "1/4", position: -1},
+        {odds: "1/1", terms: "1/4", position: 1},
+        {odds: "8/1", terms: "1/4", position: 1},
+        {odds: "2/5", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/4", position: -1}
     ];
 
-    result = betcruncher({ type: "fivefold", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "fivefold", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(2520, result.returns, "Unexpected return value. Expected 2520, saw " + result.returns);
-    test.strictEqual(2420, result.profit, "Unexpected profit value. Expected 2420, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(2520, result.returns, "Expect return to be 2520");
+    assert.equal(2420, result.profit, "Expect profit to be 2420");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testSixFoldPartVoid = function (test) {
+test("Sixfold Part Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: -1 },
-        { odds: "4/1", terms: "1/4", position: 1 },
-        { odds: "5/1", terms: "1/4", position: -1 },
-        { odds: "6/1", terms: "1/4", position: 1 },
-        { odds: "7/1", terms: "1/4", position: -1 },
-        { odds: "8/1", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/4", position: 1},
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "6/1", terms: "1/4", position: 1},
+        {odds: "7/1", terms: "1/4", position: -1},
+        {odds: "8/1", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "sixfold", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "sixfold", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(31500, result.returns, "Unexpected return value. Expected 31500, saw " + result.returns);
-    test.strictEqual(31400, result.profit, "Unexpected profit value. Expected 31400, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(31500, result.returns, "Expect return to be 31500");
+    assert.equal(31400, result.profit, "Expect profit to be 31400");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testSevenFoldPartVoid = function (test) {
+test("Sevenfold Part Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "1/1", terms: "1/4", position: 1 },
-        { odds: "3/1", terms: "1/4", position: -1 },
-        { odds: "5/1", terms: "1/4", position: 1 },
-        { odds: "7/1", terms: "1/4", position: -1 },
-        { odds: "9/1", terms: "1/4", position: 1 },
-        { odds: "11/1", terms: "1/4", position: 1 },
-        { odds: "15/1", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "1/1", terms: "1/4", position: 1},
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "7/1", terms: "1/4", position: -1},
+        {odds: "9/1", terms: "1/4", position: 1},
+        {odds: "11/1", terms: "1/4", position: 1},
+        {odds: "15/1", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "sevenfold", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "sevenfold", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(2304000, result.returns, "Unexpected return value. Expected 2304000, saw " + result.returns);
-    test.strictEqual(2303900, result.profit, "Unexpected profit value. Expected 2303900, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(2304000, result.returns, "Expect return to be 2304000");
+    assert.equal(2303900, result.profit, "Expect profit to be 2303900");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEightFoldPartVoid = function (test) {
+test("Eightfold Part Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "2/1", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/4", position: 1 },
-        { odds: "6/1", terms: "1/4", position: -1 },
-        { odds: "8/1", terms: "1/4", position: 1 },
-        { odds: "7/2", terms: "1/4", position: 1 },
-        { odds: "5/2", terms: "1/4", position: -1 },
-        { odds: "3/2", terms: "1/4", position: 1 },
-        { odds: "2/3", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "2/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/4", position: 1},
+        {odds: "6/1", terms: "1/4", position: -1},
+        {odds: "8/1", terms: "1/4", position: 1},
+        {odds: "7/2", terms: "1/4", position: 1},
+        {odds: "5/2", terms: "1/4", position: -1},
+        {odds: "3/2", terms: "1/4", position: 1},
+        {odds: "2/3", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "eightfold", stake: 100, eachWay: false }, runners);
+    const result = betcruncher({type: "eightfold", stake: 100, eachWay: false}, runners);
 
-    test.strictEqual(100, result.totalStake, "Unexpected total stake value. Expected 100, saw " + result.totalStake);
-    test.strictEqual(253125, result.returns, "Unexpected return value. Expected 253125, saw " + result.returns);
-    test.strictEqual(253025, result.profit, "Unexpected profit value. Expected 253025, saw " + result.profit);
+    assert.equal(100, result.totalStake, "Expect total stake to be 100");
+    assert.equal(253125, result.returns, "Expect return to be 253125");
+    assert.equal(253025, result.profit, "Expect profit to be 253025");
 
-    test.done();
-};
+    assert.end();
+});
 
 // Each way winning bets
 
-exports.testEachWaySingle = function (test) {
+test("Each Way Single", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "9/2", terms: "1/5", position: 2 }
+    const runners = [
+        {odds: "9/2", terms: "1/5", position: 2}
     ];
 
-    result = betcruncher({ type: "single", stake: 15, eachWay: true }, runners);
+    const result = betcruncher({type: "single", stake: 15, eachWay: true}, runners);
 
-    test.strictEqual(30, result.totalStake, "Unexpected total stake value. Expected 30, saw " + result.totalStake);
-    test.strictEqual(28.5, result.returns, "Unexpected return value. Expected 28.5, saw " + result.returns);
-    test.strictEqual(-1.5, result.profit, "Unexpected profit value. Expected -1.5, saw " + result.profit);
+    assert.equal(30, result.totalStake, "Expect total stake to be 30");
+    assert.equal(28.5, result.returns, "Expect return to be 28.5");
+    assert.equal(-1.5, result.profit, "Expect profit to be -1.5");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayDouble = function (test) {
+test("Each Way Double", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/5", position: 2 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/5", position: 2}
     ];
 
-    result = betcruncher({ type: "double", stake: 8, eachWay: true }, runners);
+    const result = betcruncher({type: "double", stake: 8, eachWay: true}, runners);
 
-    test.strictEqual(16, result.totalStake, "Unexpected total stake value. Expected 16, saw " + result.totalStake);
-    test.strictEqual(25.2, result.returns, "Unexpected return value. Expected 25.2, saw " + result.returns);
-    test.strictEqual(9.2, result.profit, "Unexpected profit value. Expected 9.2, saw " + result.profit);
+    assert.equal(16, result.totalStake, "Expect total stake to be 16");
+    assert.equal(25.2, result.returns, "Expect return to be 25.2");
+    assert.equal(9.2, result.profit, "Expect profit to be 9.2");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayTreble = function (test) {
+test("Each Way Treble", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/5", position: 2 },
-        { odds: "7/2", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/5", position: 2},
+        {odds: "7/2", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "treble", stake: 13, eachWay: true }, runners);
+    const result = betcruncher({type: "treble", stake: 13, eachWay: true}, runners);
 
-    test.strictEqual(26, result.totalStake, "Unexpected total stake value. Expected 26, saw " + result.totalStake);
-    test.strictEqual(76.78, result.returns, "Unexpected return value. Expected 76.78, saw " + result.returns);
-    test.strictEqual(50.78, result.profit, "Unexpected profit value. Expected 50.78, saw " + result.profit);
+    assert.equal(26, result.totalStake, "Expect total stake to be 26");
+    assert.equal(76.78, result.returns, "Expect return to be 76.78");
+    assert.equal(50.78, result.profit, "Expect profit to be 50.78");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayFourFold = function (test) {
+test("Each Way Fourfold", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "10/1", terms: "1/4", position: 1 },
-        { odds: "5/1", terms: "1/5", position: 2 },
-        { odds: "100/30", terms: "1/4", position: 1 },
-        { odds: "1/4", terms: "1/5", position: 2 }
+    const runners = [
+        {odds: "10/1", terms: "1/4", position: 1},
+        {odds: "5/1", terms: "1/5", position: 2},
+        {odds: "100/30", terms: "1/4", position: 1},
+        {odds: "1/4", terms: "1/5", position: 2}
     ];
 
-    result = betcruncher({ type: "fourfold", stake: 12, eachWay: true }, runners);
+    const result = betcruncher({type: "fourfold", stake: 12, eachWay: true}, runners);
 
-    test.strictEqual(24, result.totalStake, "Unexpected total stake value. Expected 24, saw " + result.totalStake);
-    test.strictEqual(161.70, result.returns, "Unexpected return value. Expected 161.70, saw " + result.returns);
-    test.strictEqual(137.70, result.profit, "Unexpected profit value. Expected 137.70, saw " + result.profit);
+    assert.equal(24, result.totalStake, "Expect total stake to be 24");
+    assert.equal(161.70, result.returns, "Expect return to be 161.70");
+    assert.equal(137.70, result.profit, "Expect profit to be 137.70");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayFiveFold = function (test) {
+test("Each Way Fivefold", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "2/1", terms: "1/4", position: 1 },
-        { odds: "1/1", terms: "1/5", position: 2 },
-        { odds: "8/1", terms: "1/6", position: 1 },
-        { odds: "2/5", terms: "1/5", position: 2 },
-        { odds: "4/1", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "2/1", terms: "1/4", position: 1},
+        {odds: "1/1", terms: "1/5", position: 2},
+        {odds: "8/1", terms: "1/6", position: 1},
+        {odds: "2/5", terms: "1/5", position: 2},
+        {odds: "4/1", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "fivefold", stake: 4, eachWay: true }, runners);
+    const result = betcruncher({type: "fivefold", stake: 4, eachWay: true}, runners);
 
-    test.strictEqual(8, result.totalStake, "Unexpected total stake value. Expected 8, saw " + result.totalStake);
-    test.strictEqual(36.29, result.returns, "Unexpected return value. Expected 36.29, saw " + result.returns);
-    test.strictEqual(28.29, result.profit, "Unexpected profit value. Expected 28.29, saw " + result.profit);
+    assert.equal(8, result.totalStake, "Expect total stake to be 8");
+    assert.equal(36.29, result.returns, "Expect return to be 36.29");
+    assert.equal(28.29, result.profit, "Expect profit to be 28.29");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWaySixFold = function (test) {
+test("Each Way Sixfold", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/5", position: 2 },
-        { odds: "5/1", terms: "1/4", position: 2 },
-        { odds: "6/1", terms: "1/6", position: 1 },
-        { odds: "7/1", terms: "1/4", position: 2 },
-        { odds: "8/1", terms: "1/5", position: 1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/5", position: 2},
+        {odds: "5/1", terms: "1/4", position: 2},
+        {odds: "6/1", terms: "1/6", position: 1},
+        {odds: "7/1", terms: "1/4", position: 2},
+        {odds: "8/1", terms: "1/5", position: 1}
     ];
 
-    result = betcruncher({ type: "sixfold", stake: 2, eachWay: true }, runners);
+    const result = betcruncher({type: "sixfold", stake: 2, eachWay: true}, runners);
 
-    test.strictEqual(4, result.totalStake, "Unexpected total stake value. Expected 4, saw " + result.totalStake);
-    test.strictEqual(202.7, result.returns, "Unexpected return value. Expected 202.7, saw " + result.returns);
-    test.strictEqual(198.7, result.profit, "Unexpected profit value. Expected 198.7, saw " + result.profit);
+    assert.equal(4, result.totalStake, "Expect total stake to be 4");
+    assert.equal(202.7, result.returns, "Expect return to be 202.7");
+    assert.equal(198.7, result.profit, "Expect profit to be 198.7");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWaySevenFold = function (test) {
+test("Each Way Sevenfold", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "1/1", terms: "1/4", position: 2 },
-        { odds: "3/1", terms: "1/5", position: 2 },
-        { odds: "5/1", terms: "1/6", position: 2 },
-        { odds: "7/1", terms: "1/5", position: 2 },
-        { odds: "9/1", terms: "1/6", position: 2 },
-        { odds: "11/1", terms: "1/4", position: 2 },
-        { odds: "15/1", terms: "1/4", position: 2 }
+    const runners = [
+        {odds: "1/1", terms: "1/4", position: 2},
+        {odds: "3/1", terms: "1/5", position: 2},
+        {odds: "5/1", terms: "1/6", position: 2},
+        {odds: "7/1", terms: "1/5", position: 2},
+        {odds: "9/1", terms: "1/6", position: 2},
+        {odds: "11/1", terms: "1/4", position: 2},
+        {odds: "15/1", terms: "1/4", position: 2}
     ];
 
-    result = betcruncher({ type: "sevenfold", stake: 5.5, eachWay: true }, runners);
+    const result = betcruncher({type: "sevenfold", stake: 5.5, eachWay: true}, runners);
 
-    test.strictEqual(11, result.totalStake, "Unexpected total stake value. Expected 11, saw " + result.totalStake);
-    test.strictEqual(2155.31, result.returns, "Unexpected return value. Expected 2155.31, saw " + result.returns);
-    test.strictEqual(2144.31, result.profit, "Unexpected profit value. Expected 2144.31, saw " + result.profit);
+    assert.equal(11, result.totalStake, "Expect total stake to be 11");
+    assert.equal(2155.31, result.returns, "Expect return to be 2155.31");
+    assert.equal(2144.31, result.profit, "Expect profit to be 2144.31");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayEightFold = function (test) {
+test("Each Way Eightfold", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "2/1", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/5", position: 1 },
-        { odds: "6/1", terms: "1/6", position: 1 },
-        { odds: "8/1", terms: "1/4", position: 1 },
-        { odds: "7/2", terms: "1/5", position: 1 },
-        { odds: "5/2", terms: "1/6", position: 1 },
-        { odds: "3/2", terms: "1/4", position: 1 },
-        { odds: "2/3", terms: "1/5", position: 1 }
+    const runners = [
+        {odds: "2/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/5", position: 1},
+        {odds: "6/1", terms: "1/6", position: 1},
+        {odds: "8/1", terms: "1/4", position: 1},
+        {odds: "7/2", terms: "1/5", position: 1},
+        {odds: "5/2", terms: "1/6", position: 1},
+        {odds: "3/2", terms: "1/4", position: 1},
+        {odds: "2/3", terms: "1/5", position: 1}
     ];
 
-    result = betcruncher({ type: "eightfold", stake: 100, eachWay: true }, runners);
+    const result = betcruncher({type: "eightfold", stake: 100, eachWay: true}, runners);
 
-    test.strictEqual(200, result.totalStake, "Unexpected total stake value. Expected 200, saw " + result.totalStake);
-    test.strictEqual(6207642.34, result.returns, "Unexpected return value. Expected 6207642.34, saw " + result.returns);
-    test.strictEqual(6207442.34, result.profit, "Unexpected profit value. Expected 6207442.34, saw " + result.profit);
+    assert.equal(200, result.totalStake, "Expect total stake to be 200");
+    assert.equal(6207642.34, result.returns, "Expect return to be 6207642.34");
+    assert.equal(6207442.34, result.profit, "Expect profit to be 6207442.34");
 
-    test.done();
-};
+    assert.end();
+});
 
 
 // Each way losing bets
 
-exports.testEachWaySingleLoser = function (test) {
+test("Each Way Single Loser", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "9/2", terms: "1/5", position: 0 }
+    const runners = [
+        {odds: "9/2", terms: "1/5", position: 0}
     ];
 
-    result = betcruncher({ type: "single", stake: 15, eachWay: true }, runners);
+    const result = betcruncher({type: "single", stake: 15, eachWay: true}, runners);
 
-    test.strictEqual(30, result.totalStake, "Unexpected total stake value. Expected 30, saw " + result.totalStake);
-    test.strictEqual(0, result.returns, "Unexpected return value. Expected 0, saw " + result.returns);
-    test.strictEqual(-30, result.profit, "Unexpected profit value. Expected -30, saw " + result.profit);
+    assert.equal(30, result.totalStake, "Expect total stake to be 30");
+    assert.equal(0, result.returns, "Expect return to be 0");
+    assert.equal(-30, result.profit, "Expect profit to be -30");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayDoubleLoser = function (test) {
+test("Each Way Double Loser", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: 0 },
-        { odds: "4/1", terms: "1/5", position: 0 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: 0},
+        {odds: "4/1", terms: "1/5", position: 0}
     ];
 
-    result = betcruncher({ type: "double", stake: 8, eachWay: true }, runners);
+    const result = betcruncher({type: "double", stake: 8, eachWay: true}, runners);
 
-    test.strictEqual(16, result.totalStake, "Unexpected total stake value. Expected 16, saw " + result.totalStake);
-    test.strictEqual(0, result.returns, "Unexpected return value. Expected 0, saw " + result.returns);
-    test.strictEqual(-16, result.profit, "Unexpected profit value. Expected -16, saw " + result.profit);
+    assert.equal(16, result.totalStake, "Expect total stake to be 16");
+    assert.equal(0, result.returns, "Expect return to be 0");
+    assert.equal(-16, result.profit, "Expect profit to be -16");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayTrebleLoser = function (test) {
+test("Each Way Treble Loser", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: 0 },
-        { odds: "4/1", terms: "1/5", position: 0 },
-        { odds: "7/2", terms: "1/4", position: 0 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: 0},
+        {odds: "4/1", terms: "1/5", position: 0},
+        {odds: "7/2", terms: "1/4", position: 0}
     ];
 
-    result = betcruncher({ type: "treble", stake: 13, eachWay: true }, runners);
+    const result = betcruncher({type: "treble", stake: 13, eachWay: true}, runners);
 
-    test.strictEqual(26, result.totalStake, "Unexpected total stake value. Expected 26, saw " + result.totalStake);
-    test.strictEqual(0, result.returns, "Unexpected return value. Expected 0, saw " + result.returns);
-    test.strictEqual(-26, result.profit, "Unexpected profit value. Expected -26, saw " + result.profit);
+    assert.equal(26, result.totalStake, "Expect total stake to be 26");
+    assert.equal(0, result.returns, "Expect return to be 0");
+    assert.equal(-26, result.profit, "Expect profit to be -26");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayFourFoldLoser = function (test) {
+test("Each Way Fourfold Loser", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "10/1", terms: "1/4", position: 0 },
-        { odds: "5/1", terms: "1/5", position: 0 },
-        { odds: "100/30", terms: "1/4", position: 0 },
-        { odds: "1/4", terms: "1/5", position: 0 }
+    const runners = [
+        {odds: "10/1", terms: "1/4", position: 0},
+        {odds: "5/1", terms: "1/5", position: 0},
+        {odds: "100/30", terms: "1/4", position: 0},
+        {odds: "1/4", terms: "1/5", position: 0}
     ];
 
-    result = betcruncher({ type: "fourfold", stake: 12, eachWay: true }, runners);
+    const result = betcruncher({type: "fourfold", stake: 12, eachWay: true}, runners);
 
-    test.strictEqual(24, result.totalStake, "Unexpected total stake value. Expected 24, saw " + result.totalStake);
-    test.strictEqual(0, result.returns, "Unexpected return value. Expected 0, saw " + result.returns);
-    test.strictEqual(-24, result.profit, "Unexpected profit value. Expected -24, saw " + result.profit);
+    assert.equal(24, result.totalStake, "Expect total stake to be 24");
+    assert.equal(0, result.returns, "Expect return to be 0");
+    assert.equal(-24, result.profit, "Expect profit to be -24");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayFiveFoldLoser = function (test) {
+test("Each Way Fivefold Loser", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "2/1", terms: "1/4", position: 0 },
-        { odds: "1/1", terms: "1/5", position: 0 },
-        { odds: "8/1", terms: "1/6", position: 0 },
-        { odds: "2/5", terms: "1/5", position: 0 },
-        { odds: "4/1", terms: "1/4", position: 0 }
+    const runners = [
+        {odds: "2/1", terms: "1/4", position: 0},
+        {odds: "1/1", terms: "1/5", position: 0},
+        {odds: "8/1", terms: "1/6", position: 0},
+        {odds: "2/5", terms: "1/5", position: 0},
+        {odds: "4/1", terms: "1/4", position: 0}
     ];
 
-    result = betcruncher({ type: "fivefold", stake: 4, eachWay: true }, runners);
+    const result = betcruncher({type: "fivefold", stake: 4, eachWay: true}, runners);
 
-    test.strictEqual(8, result.totalStake, "Unexpected total stake value. Expected 8, saw " + result.totalStake);
-    test.strictEqual(0, result.returns, "Unexpected return value. Expected 0, saw " + result.returns);
-    test.strictEqual(-8, result.profit, "Unexpected profit value. Expected -8, saw " + result.profit);
+    assert.equal(8, result.totalStake, "Expect total stake to be 8");
+    assert.equal(0, result.returns, "Expect return to be 0");
+    assert.equal(-8, result.profit, "Expect profit to be -8");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWaySixFoldLoser = function (test) {
+test("Each Way Sixfold Loser", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: 0 },
-        { odds: "4/1", terms: "1/5", position: 0 },
-        { odds: "5/1", terms: "1/4", position: 0 },
-        { odds: "6/1", terms: "1/6", position: 1 },
-        { odds: "7/1", terms: "1/4", position: 2 },
-        { odds: "8/1", terms: "1/5", position: 1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: 0},
+        {odds: "4/1", terms: "1/5", position: 0},
+        {odds: "5/1", terms: "1/4", position: 0},
+        {odds: "6/1", terms: "1/6", position: 1},
+        {odds: "7/1", terms: "1/4", position: 2},
+        {odds: "8/1", terms: "1/5", position: 1}
     ];
 
-    result = betcruncher({ type: "sixfold", stake: 2, eachWay: true }, runners);
+    const result = betcruncher({type: "sixfold", stake: 2, eachWay: true}, runners);
 
-    test.strictEqual(4, result.totalStake, "Unexpected total stake value. Expected 4, saw " + result.totalStake);
-    test.strictEqual(0, result.returns, "Unexpected return value. Expected 0, saw " + result.returns);
-    test.strictEqual(-4, result.profit, "Unexpected profit value. Expected -4, saw " + result.profit);
+    assert.equal(4, result.totalStake, "Expect total stake to be 4");
+    assert.equal(0, result.returns, "Expect return to be 0");
+    assert.equal(-4, result.profit, "Expect profit to be -4");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWaySevenFoldLoser = function (test) {
+test("Each Way Sevenfold Loser", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "1/1", terms: "1/4", position: 0 },
-        { odds: "3/1", terms: "1/5", position: 2 },
-        { odds: "5/1", terms: "1/6", position: 0 },
-        { odds: "7/1", terms: "1/5", position: 2 },
-        { odds: "9/1", terms: "1/6", position: 0 },
-        { odds: "11/1", terms: "1/4", position: 2 },
-        { odds: "15/1", terms: "1/4", position: 2 }
+    const runners = [
+        {odds: "1/1", terms: "1/4", position: 0},
+        {odds: "3/1", terms: "1/5", position: 2},
+        {odds: "5/1", terms: "1/6", position: 0},
+        {odds: "7/1", terms: "1/5", position: 2},
+        {odds: "9/1", terms: "1/6", position: 0},
+        {odds: "11/1", terms: "1/4", position: 2},
+        {odds: "15/1", terms: "1/4", position: 2}
     ];
 
-    result = betcruncher({ type: "sevenfold", stake: 5.5, eachWay: true }, runners);
+    const result = betcruncher({type: "sevenfold", stake: 5.5, eachWay: true}, runners);
 
-    test.strictEqual(11, result.totalStake, "Unexpected total stake value. Expected 11, saw " + result.totalStake);
-    test.strictEqual(0, result.returns, "Unexpected return value. Expected 0, saw " + result.returns);
-    test.strictEqual(-11, result.profit, "Unexpected profit value. Expected -11, saw " + result.profit);
+    assert.equal(11, result.totalStake, "Expect total stake to be 11");
+    assert.equal(0, result.returns, "Expect return to be 0");
+    assert.equal(-11, result.profit, "Expect profit to be -11");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayEightFoldLoser = function (test) {
+test("Each Way Eightfold Loser", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "2/1", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/5", position: 0 },
-        { odds: "6/1", terms: "1/6", position: 0 },
-        { odds: "8/1", terms: "1/4", position: 0 },
-        { odds: "7/2", terms: "1/5", position: 0 },
-        { odds: "5/2", terms: "1/6", position: 0 },
-        { odds: "3/2", terms: "1/4", position: 0 },
-        { odds: "2/3", terms: "1/5", position: 1 }
+    const runners = [
+        {odds: "2/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/5", position: 0},
+        {odds: "6/1", terms: "1/6", position: 0},
+        {odds: "8/1", terms: "1/4", position: 0},
+        {odds: "7/2", terms: "1/5", position: 0},
+        {odds: "5/2", terms: "1/6", position: 0},
+        {odds: "3/2", terms: "1/4", position: 0},
+        {odds: "2/3", terms: "1/5", position: 1}
     ];
 
-    result = betcruncher({ type: "eightfold", stake: 100, eachWay: true }, runners);
+    const result = betcruncher({type: "eightfold", stake: 100, eachWay: true}, runners);
 
-    test.strictEqual(200, result.totalStake, "Unexpected total stake value. Expected 200, saw " + result.totalStake);
-    test.strictEqual(0, result.returns, "Unexpected return value. Expected 0, saw " + result.returns);
-    test.strictEqual(-200, result.profit, "Unexpected profit value. Expected -200, saw " + result.profit);
+    assert.equal(200, result.totalStake, "Expect total stake to be 200");
+    assert.equal(0, result.returns, "Expect return to be 0");
+    assert.equal(-200, result.profit, "Expect profit to be -200");
 
-    test.done();
-};
+    assert.end();
+});
 
 
 // Each way void bets
 
-exports.testEachWaySingleVoid = function (test) {
+test("Each Way Single Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "9/2", terms: "1/5", position: -1 }
+    const runners = [
+        {odds: "9/2", terms: "1/5", position: -1}
     ];
 
-    result = betcruncher({ type: "single", stake: 15, eachWay: true }, runners);
+    const result = betcruncher({type: "single", stake: 15, eachWay: true}, runners);
 
-    test.strictEqual(30, result.totalStake, "Unexpected total stake value. Expected 30, saw " + result.totalStake);
-    test.strictEqual(30, result.returns, "Unexpected return value. Expected 30, saw " + result.returns);
-    test.strictEqual(0, result.profit, "Unexpected profit value. Expected 0, saw " + result.profit);
+    assert.equal(30, result.totalStake, "Expect total stake to be 30");
+    assert.equal(30, result.returns, "Expect return to be 30");
+    assert.equal(0, result.profit, "Expect profit to be 0");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayDoubleVoid = function (test) {
+test("Each Way Double Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: -1 },
-        { odds: "4/1", terms: "1/5", position: -1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/5", position: -1}
     ];
 
-    result = betcruncher({ type: "double", stake: 8, eachWay: true }, runners);
+    const result = betcruncher({type: "double", stake: 8, eachWay: true}, runners);
 
-    test.strictEqual(16, result.totalStake, "Unexpected total stake value. Expected 16, saw " + result.totalStake);
-    test.strictEqual(16, result.returns, "Unexpected return value. Expected 16, saw " + result.returns);
-    test.strictEqual(0, result.profit, "Unexpected profit value. Expected 0, saw " + result.profit);
+    assert.equal(16, result.totalStake, "Expect total stake to be 16");
+    assert.equal(16, result.returns, "Expect return to be 16");
+    assert.equal(0, result.profit, "Expect profit to be 0");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayTrebleVoid = function (test) {
+test("Each Way Treble Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: -1 },
-        { odds: "4/1", terms: "1/5", position: -1 },
-        { odds: "7/2", terms: "1/4", position: -1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/5", position: -1},
+        {odds: "7/2", terms: "1/4", position: -1}
     ];
 
-    result = betcruncher({ type: "treble", stake: 13, eachWay: true }, runners);
+    const result = betcruncher({type: "treble", stake: 13, eachWay: true}, runners);
 
-    test.strictEqual(26, result.totalStake, "Unexpected total stake value. Expected 26, saw " + result.totalStake);
-    test.strictEqual(26, result.returns, "Unexpected return value. Expected 26, saw " + result.returns);
-    test.strictEqual(0, result.profit, "Unexpected profit value. Expected 0, saw " + result.profit);
+    assert.equal(26, result.totalStake, "Expect total stake to be 26");
+    assert.equal(26, result.returns, "Expect return to be 26");
+    assert.equal(0, result.profit, "Expect profit to be 0");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayFourFoldVoid = function (test) {
+test("Each Way Fourfold Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "10/1", terms: "1/4", position: -1 },
-        { odds: "5/1", terms: "1/5", position: -1 },
-        { odds: "100/30", terms: "1/4", position: -1 },
-        { odds: "1/4", terms: "1/5", position: -1 }
+    const runners = [
+        {odds: "10/1", terms: "1/4", position: -1},
+        {odds: "5/1", terms: "1/5", position: -1},
+        {odds: "100/30", terms: "1/4", position: -1},
+        {odds: "1/4", terms: "1/5", position: -1}
     ];
 
-    result = betcruncher({ type: "fourfold", stake: 12, eachWay: true }, runners);
+    const result = betcruncher({type: "fourfold", stake: 12, eachWay: true}, runners);
 
-    test.strictEqual(24, result.totalStake, "Unexpected total stake value. Expected 24, saw " + result.totalStake);
-    test.strictEqual(24, result.returns, "Unexpected return value. Expected 24, saw " + result.returns);
-    test.strictEqual(0, result.profit, "Unexpected profit value. Expected 0, saw " + result.profit);
+    assert.equal(24, result.totalStake, "Expect total stake to be 24");
+    assert.equal(24, result.returns, "Expect return to be 24");
+    assert.equal(0, result.profit, "Expect profit to be 0");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayFiveFoldVoid = function (test) {
+test("Each Way Fivefold Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "2/1", terms: "1/4", position: -1 },
-        { odds: "1/1", terms: "1/5", position: -1 },
-        { odds: "8/1", terms: "1/6", position: -1 },
-        { odds: "2/5", terms: "1/5", position: -1 },
-        { odds: "4/1", terms: "1/4", position: -1 }
+    const runners = [
+        {odds: "2/1", terms: "1/4", position: -1},
+        {odds: "1/1", terms: "1/5", position: -1},
+        {odds: "8/1", terms: "1/6", position: -1},
+        {odds: "2/5", terms: "1/5", position: -1},
+        {odds: "4/1", terms: "1/4", position: -1}
     ];
 
-    result = betcruncher({ type: "fivefold", stake: 4, eachWay: true }, runners);
+    const result = betcruncher({type: "fivefold", stake: 4, eachWay: true}, runners);
 
-    test.strictEqual(8, result.totalStake, "Unexpected total stake value. Expected 8, saw " + result.totalStake);
-    test.strictEqual(8, result.returns, "Unexpected return value. Expected 8, saw " + result.returns);
-    test.strictEqual(0, result.profit, "Unexpected profit value. Expected 0, saw " + result.profit);
+    assert.equal(8, result.totalStake, "Expect total stake to be 8");
+    assert.equal(8, result.returns, "Expect return to be 8");
+    assert.equal(0, result.profit, "Expect profit to be 0");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWaySixFoldVoid = function (test) {
+test("Each Way Sixfold Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: -1 },
-        { odds: "4/1", terms: "1/5", position: -1 },
-        { odds: "5/1", terms: "1/4", position: -1 },
-        { odds: "6/1", terms: "1/6", position: -1 },
-        { odds: "7/1", terms: "1/4", position: -1 },
-        { odds: "8/1", terms: "1/5", position: -1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/5", position: -1},
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "6/1", terms: "1/6", position: -1},
+        {odds: "7/1", terms: "1/4", position: -1},
+        {odds: "8/1", terms: "1/5", position: -1}
     ];
 
-    result = betcruncher({ type: "sixfold", stake: 2, eachWay: true }, runners);
+    const result = betcruncher({type: "sixfold", stake: 2, eachWay: true}, runners);
 
-    test.strictEqual(4, result.totalStake, "Unexpected total stake value. Expected 4, saw " + result.totalStake);
-    test.strictEqual(4, result.returns, "Unexpected return value. Expected 4, saw " + result.returns);
-    test.strictEqual(0, result.profit, "Unexpected profit value. Expected 0, saw " + result.profit);
+    assert.equal(4, result.totalStake, "Expect total stake to be 4");
+    assert.equal(4, result.returns, "Expect return to be 4");
+    assert.equal(0, result.profit, "Expect profit to be 0");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWaySevenFoldVoid = function (test) {
+test("Each Way Sevenfold Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "1/1", terms: "1/4", position: -1 },
-        { odds: "3/1", terms: "1/5", position: -1 },
-        { odds: "5/1", terms: "1/6", position: -1 },
-        { odds: "7/1", terms: "1/5", position: -1 },
-        { odds: "9/1", terms: "1/6", position: -1 },
-        { odds: "11/1", terms: "1/4", position: -1 },
-        { odds: "15/1", terms: "1/4", position: -1 }
+    const runners = [
+        {odds: "1/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/5", position: -1},
+        {odds: "5/1", terms: "1/6", position: -1},
+        {odds: "7/1", terms: "1/5", position: -1},
+        {odds: "9/1", terms: "1/6", position: -1},
+        {odds: "11/1", terms: "1/4", position: -1},
+        {odds: "15/1", terms: "1/4", position: -1}
     ];
 
-    result = betcruncher({ type: "sevenfold", stake: 5.5, eachWay: true }, runners);
+    const result = betcruncher({type: "sevenfold", stake: 5.5, eachWay: true}, runners);
 
-    test.strictEqual(11, result.totalStake, "Unexpected total stake value. Expected 11, saw " + result.totalStake);
-    test.strictEqual(11, result.returns, "Unexpected return value. Expected 11, saw " + result.returns);
-    test.strictEqual(0, result.profit, "Unexpected profit value. Expected 0, saw " + result.profit);
+    assert.equal(11, result.totalStake, "Expect total stake to be 11");
+    assert.equal(11, result.returns, "Expect return to be 11");
+    assert.equal(0, result.profit, "Expect profit to be 0");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayEightFoldVoid = function (test) {
+test("Each Way Eightfold Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "2/1", terms: "1/4", position: -1 },
-        { odds: "4/1", terms: "1/5", position: -1 },
-        { odds: "6/1", terms: "1/6", position: -1 },
-        { odds: "8/1", terms: "1/4", position: -1 },
-        { odds: "7/2", terms: "1/5", position: -1 },
-        { odds: "5/2", terms: "1/6", position: -1 },
-        { odds: "3/2", terms: "1/4", position: -1 },
-        { odds: "2/3", terms: "1/5", position: -1 }
+    const runners = [
+        {odds: "2/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/5", position: -1},
+        {odds: "6/1", terms: "1/6", position: -1},
+        {odds: "8/1", terms: "1/4", position: -1},
+        {odds: "7/2", terms: "1/5", position: -1},
+        {odds: "5/2", terms: "1/6", position: -1},
+        {odds: "3/2", terms: "1/4", position: -1},
+        {odds: "2/3", terms: "1/5", position: -1}
     ];
 
-    result = betcruncher({ type: "eightfold", stake: 100, eachWay: true }, runners);
+    const result = betcruncher({type: "eightfold", stake: 100, eachWay: true}, runners);
 
-    test.strictEqual(200, result.totalStake, "Unexpected total stake value. Expected 200, saw " + result.totalStake);
-    test.strictEqual(200, result.returns, "Unexpected return value. Expected 200, saw " + result.returns);
-    test.strictEqual(0, result.profit, "Unexpected profit value. Expected 0, saw " + result.profit);
+    assert.equal(200, result.totalStake, "Expect total stake to be 200");
+    assert.equal(200, result.returns, "Expect return to be 200");
+    assert.equal(0, result.profit, "Expect profit to be 0");
 
-    test.done();
-};
+    assert.end();
+});
 
 
 // Each way part-void bets
 
-exports.testEachWayDoublePartVoid = function (test) {
+test("Each Way Double Part Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: -1 },
-        { odds: "4/1", terms: "1/5", position: 1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/5", position: 1}
     ];
 
-    result = betcruncher({ type: "double", stake: 8, eachWay: true }, runners);
+    const result = betcruncher({type: "double", stake: 8, eachWay: true}, runners);
 
-    test.strictEqual(16, result.totalStake, "Unexpected total stake value. Expected 16, saw " + result.totalStake);
-    test.strictEqual(54.4, result.returns, "Unexpected return value. Expected 54.4, saw " + result.returns);
-    test.strictEqual(38.4, result.profit, "Unexpected profit value. Expected 38.4, saw " + result.profit);
+    assert.equal(16, result.totalStake, "Expect total stake to be 16");
+    assert.equal(54.4, result.returns, "Expect return to be 54.4");
+    assert.equal(38.4, result.profit, "Expect profit to be 38.4");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayTreblePartVoid = function (test) {
+test("Each Way Treble Part Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: -1 },
-        { odds: "4/1", terms: "1/5", position: 1 },
-        { odds: "7/2", terms: "1/4", position: 2 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/5", position: 1},
+        {odds: "7/2", terms: "1/4", position: 2}
     ];
 
-    result = betcruncher({ type: "treble", stake: 13, eachWay: true }, runners);
+    const result = betcruncher({type: "treble", stake: 13, eachWay: true}, runners);
 
-    test.strictEqual(26, result.totalStake, "Unexpected total stake value. Expected 26, saw " + result.totalStake);
-    test.strictEqual(43.88, result.returns, "Unexpected return value. Expected 43.88, saw " + result.returns);
-    test.strictEqual(17.88, result.profit, "Unexpected profit value. Expected 17.88, saw " + result.profit);
+    assert.equal(26, result.totalStake, "Expect total stake to be 26");
+    assert.equal(43.88, result.returns, "Expect return to be 43.88");
+    assert.equal(17.88, result.profit, "Expect profit to be 17.88");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayFourFoldPartVoid = function (test) {
+test("Each Way Fourfold Part Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "10/1", terms: "1/4", position: 2 },
-        { odds: "5/1", terms: "1/5", position: -1 },
-        { odds: "100/30", terms: "1/4", position: 1 },
-        { odds: "1/4", terms: "1/5", position: -1 }
+    const runners = [
+        {odds: "10/1", terms: "1/4", position: 2},
+        {odds: "5/1", terms: "1/5", position: -1},
+        {odds: "100/30", terms: "1/4", position: 1},
+        {odds: "1/4", terms: "1/5", position: -1}
     ];
 
-    result = betcruncher({ type: "fourfold", stake: 12, eachWay: true }, runners);
+    const result = betcruncher({type: "fourfold", stake: 12, eachWay: true}, runners);
 
-    test.strictEqual(24, result.totalStake, "Unexpected total stake value. Expected 24, saw " + result.totalStake);
-    test.strictEqual(77, result.returns, "Unexpected return value. Expected 77, saw " + result.returns);
-    test.strictEqual(53, result.profit, "Unexpected profit value. Expected 53, saw " + result.profit);
+    assert.equal(24, result.totalStake, "Expect total stake to be 24");
+    assert.equal(77, result.returns, "Expect return to be 77");
+    assert.equal(53, result.profit, "Expect profit to be 53");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayFiveFoldPartVoid = function (test) {
+test("Each Way Fivefold Part Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "2/1", terms: "1/4", position: 1 },
-        { odds: "1/1", terms: "1/5", position: 2 },
-        { odds: "8/1", terms: "1/6", position: -1 },
-        { odds: "2/5", terms: "1/5", position: 2 },
-        { odds: "4/1", terms: "1/4", position: -1 }
+    const runners = [
+        {odds: "2/1", terms: "1/4", position: 1},
+        {odds: "1/1", terms: "1/5", position: 2},
+        {odds: "8/1", terms: "1/6", position: -1},
+        {odds: "2/5", terms: "1/5", position: 2},
+        {odds: "4/1", terms: "1/4", position: -1}
     ];
 
-    result = betcruncher({ type: "fivefold", stake: 4, eachWay: true }, runners);
+    const result = betcruncher({type: "fivefold", stake: 4, eachWay: true}, runners);
 
-    test.strictEqual(8, result.totalStake, "Unexpected total stake value. Expected 8, saw " + result.totalStake);
-    test.strictEqual(7.78, result.returns, "Unexpected return value. Expected 7.78, saw " + result.returns);
-    test.strictEqual(-0.22, result.profit, "Unexpected profit value. Expected -0.22, saw " + result.profit);
+    assert.equal(8, result.totalStake, "Expect total stake to be 8");
+    assert.equal(7.78, result.returns, "Expect return to be 7.78");
+    assert.equal(-0.22, result.profit, "Expect profit to be -0.22");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWaySixFoldPartVoid = function (test) {
+test("Each Way Sixfold Part Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "3/1", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/5", position: 2 },
-        { odds: "5/1", terms: "1/4", position: -1 },
-        { odds: "6/1", terms: "1/6", position: -1 },
-        { odds: "7/1", terms: "1/4", position: 2 },
-        { odds: "8/1", terms: "1/5", position: -1 }
+    const runners = [
+        {odds: "3/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/5", position: 2},
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "6/1", terms: "1/6", position: -1},
+        {odds: "7/1", terms: "1/4", position: 2},
+        {odds: "8/1", terms: "1/5", position: -1}
     ];
 
-    result = betcruncher({ type: "sixfold", stake: 2, eachWay: true }, runners);
+    const result = betcruncher({type: "sixfold", stake: 2, eachWay: true}, runners);
 
-    test.strictEqual(4, result.totalStake, "Unexpected total stake value. Expected 4, saw " + result.totalStake);
-    test.strictEqual(17.32, result.returns, "Unexpected return value. Expected 17.32, saw " + result.returns);
-    test.strictEqual(13.32, result.profit, "Unexpected profit value. Expected 13.32, saw " + result.profit);
+    assert.equal(4, result.totalStake, "Expect total stake to be 4");
+    assert.equal(17.32, result.returns, "Expect return to be 17.32");
+    assert.equal(13.32, result.profit, "Expect profit to be 13.32");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWaySevenFoldPartVoid = function (test) {
+test("Each Way Sevenfold Part Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "1/1", terms: "1/4", position: 1 },
-        { odds: "3/1", terms: "1/5", position: -1 },
-        { odds: "5/1", terms: "1/6", position: 2 },
-        { odds: "7/1", terms: "1/5", position: -1 },
-        { odds: "9/1", terms: "1/6", position: 2 },
-        { odds: "11/1", terms: "1/4", position: -1 },
-        { odds: "15/1", terms: "1/4", position: 1 }
+    const runners = [
+        {odds: "1/1", terms: "1/4", position: 1},
+        {odds: "3/1", terms: "1/5", position: -1},
+        {odds: "5/1", terms: "1/6", position: 2},
+        {odds: "7/1", terms: "1/5", position: -1},
+        {odds: "9/1", terms: "1/6", position: 2},
+        {odds: "11/1", terms: "1/4", position: -1},
+        {odds: "15/1", terms: "1/4", position: 1}
     ];
 
-    result = betcruncher({ type: "sevenfold", stake: 5.5, eachWay: true }, runners);
+    const result = betcruncher({type: "sevenfold", stake: 5.5, eachWay: true}, runners);
 
-    test.strictEqual(11, result.totalStake, "Unexpected total stake value. Expected 11, saw " + result.totalStake);
-    test.strictEqual(149.67, result.returns, "Unexpected return value. Expected 149.67, saw " + result.returns);
-    test.strictEqual(138.67, result.profit, "Unexpected profit value. Expected 138.67, saw " + result.profit);
+    assert.equal(11, result.totalStake, "Expect total stake to be 11");
+    assert.equal(149.67, result.returns, "Expect return to be 149.67");
+    assert.equal(138.67, result.profit, "Expect profit to be 138.67");
 
-    test.done();
-};
+    assert.end();
+});
 
-exports.testEachWayEightFoldPartVoid = function (test) {
+test("Each Way Eightfold Part Void", assert => {
 
-    var runners, result;
+    assert.plan(3);
 
-    test.expect(3);
-
-    runners = [
-        { odds: "2/1", terms: "1/4", position: 1 },
-        { odds: "4/1", terms: "1/5", position: 2 },
-        { odds: "6/1", terms: "1/6", position: -1 },
-        { odds: "8/1", terms: "1/4", position: -1 },
-        { odds: "7/2", terms: "1/5", position: 2 },
-        { odds: "5/2", terms: "1/6", position: -1 },
-        { odds: "3/2", terms: "1/4", position: 1 },
-        { odds: "2/3", terms: "1/5", position: 1 }
+    const runners = [
+        {odds: "2/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/5", position: 2},
+        {odds: "6/1", terms: "1/6", position: -1},
+        {odds: "8/1", terms: "1/4", position: -1},
+        {odds: "7/2", terms: "1/5", position: 2},
+        {odds: "5/2", terms: "1/6", position: -1},
+        {odds: "3/2", terms: "1/4", position: 1},
+        {odds: "2/3", terms: "1/5", position: 1}
     ];
 
-    result = betcruncher({ type: "eightfold", stake: 100, eachWay: true }, runners);
+    const result = betcruncher({type: "eightfold", stake: 100, eachWay: true}, runners);
 
-    test.strictEqual(200, result.totalStake, "Unexpected total stake value. Expected 200, saw " + result.totalStake);
-    test.strictEqual(715.28, result.returns, "Unexpected return value. Expected 715.28, saw " + result.returns);
-    test.strictEqual(515.28, result.profit, "Unexpected profit value. Expected 515.28, saw " + result.profit);
+    assert.equal(200, result.totalStake, "Expect total stake to be 200");
+    assert.equal(715.28, result.returns, "Expect return to be 715.28");
+    assert.equal(515.28, result.profit, "Expect profit to be 515.28");
 
-    test.done();
-};
+    assert.end();
+});
+
+test("Trixie", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "5/1", terms: "1/4", position: 1}
+    ];
+
+    const result = betcruncher({type: "trixie", stake: 10, eachWay: false}, runners);
+
+    assert.equal(40, result.totalStake, "Expect total stake to be 40");
+    assert.equal(3240, result.returns, "Expect return to be 3240");
+    assert.equal(3200, result.profit, "Expect profit to be 3200");
+
+    assert.end();
+});
 
 // And now we have to do all the same again, for the bet types below.
-// I'm tired. It's my birthday. I'm not going to do it right now, sorry.
 
 // Trixie
 // Yankee

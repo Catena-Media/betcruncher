@@ -1,2 +1,4 @@
 .DS_Store
-node_modules
+Thumbs.db
+/node_modules
+/coverage

@@ -2,29 +2,34 @@
   "name": "betcruncher",
   "version": "1.0.0",
   "description": "A betting calculator engine",
+  "repository": "digitaldesignlabs/betcruncher",
   "author": {
-    "name": "twistdigital",
-    "contact": "contact@twistdigital.co.uk"
+    "name": "Digital Design Labs",
+    "contact": "hello@digitaldesignlabs.com"
   },
   "contributors": [
-      {
-          "name": "Howard Yeend",
-          "email": "howard.yeend@gmail.com"
-      },
-      {
-          "name": "Mike Hall",
-          "email": "mikehall314@gmail.com"
-      }
+    {
+      "name": "Howard Yeend",
+      "email": "howard.yeend@gmail.com"
+    },
+    {
+      "name": "Mike Hall",
+      "email": "mikehall314@gmail.com"
+    }
   ],
   "scripts": {
-    "test": "nodeunit test"
+    "pretest": "./node_modules/.bin/eslint lib test",
+    "test": "./node_modules/.bin/tape test",
+    "test:cover": "./node_modules/.bin/istanbul cover test"
   },
   "main": "lib/betcruncher.js",
   "files": [
-      "lib"
+    "lib"
   ],
-  "license": "GPLv2",
+  "license": "GPL-2.0",
   "devDependencies": {
-    "nodeunit": "^0.9.1"
+    "eslint": "^4.11.0",
+    "istanbul": "^0.4.5",
+    "tape": "^4.8.0"
   }
 }
