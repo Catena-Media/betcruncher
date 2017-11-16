@@ -1,0 +1,10 @@
+parserOptions:
+    ecmaVersion: 5
+
+env:
+    es6: false
+    commonjs: true
+
+rules:
+    no-var: 0
+    max-depth: 0
