@@ -1467,6 +1467,9 @@ test("Each Way Eightfold Part Void", assert => {
     assert.end();
 });
 
+
+// Trixie
+
 test("Trixie", assert => {
 
     assert.plan(3);
@@ -1486,12 +1489,654 @@ test("Trixie", assert => {
     assert.end();
 });
 
+test("Trixie Loser", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: 0},
+        {odds: "6/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/4", position: 1}
+    ];
+
+    const result = betcruncher({type: "trixie", stake: 10, eachWay: false}, runners);
+
+    assert.equal(40, result.totalStake, "Expect total stake to be 40");
+    assert.equal(350, result.returns, "Expect return to be 350");
+    assert.equal(310, result.profit, "Expect profit to be 310");
+
+    assert.end();
+});
+
+test("Trixie Void", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1}
+    ];
+
+    const result = betcruncher({type: "trixie", stake: 10, eachWay: false}, runners);
+
+    assert.equal(40, result.totalStake, "Expect total stake to be 40");
+    assert.equal(40, result.returns, "Expect return to be 40");
+    assert.equal(0, result.profit, "Expect profit to be 0");
+
+    assert.end();
+});
+
+test("Trixie Part Void", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: 1},
+        {odds: "2/1", terms: "1/4", position: 1}
+    ];
+
+    const result = betcruncher({type: "trixie", stake: 10, eachWay: false}, runners);
+
+    assert.equal(40, result.totalStake, "Expect total stake to be 40");
+    assert.equal(310, result.returns, "Expect return to be 3240");
+    assert.equal(270, result.profit, "Expect profit to be 3200");
+
+    assert.end();
+});
+
+
+test("Each Way Trixie", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "10/1", terms: "1/4", position: 1},
+        {odds: "200/1", terms: "1/5", position: 1},
+        {odds: "2/3", terms: "1/6", position: 1}
+    ];
+
+    const result = betcruncher({type: "trixie", stake: 10, eachWay: true}, runners);
+
+    assert.equal(80, result.totalStake, "Expect total stake to be 80");
+    assert.equal(66017.22, result.returns, "Expect return to be 66017.22");
+    assert.equal(65937.22, result.profit, "Expect profit to be 64937.22");
+
+    assert.end();
+});
+
+test("Each Way Trixie Loser", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: 0},
+        {odds: "7/2", terms: "1/5", position: 1},
+        {odds: "1/2", terms: "1/5", position: 1}
+    ];
+
+    const result = betcruncher({type: "trixie", stake: 10, eachWay: true}, runners);
+
+    assert.equal(80, result.totalStake, "Expect total stake to be 80");
+    assert.equal(86.20, result.returns, "Expect return to be 86.20");
+    assert.equal(6.20, result.profit, "Expect profit to be 6.20");
+
+    assert.end();
+});
+
+test("Each Way Trixie Void", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "2/1", terms: "1/4", position: -1}
+    ];
+
+    const result = betcruncher({type: "trixie", stake: 10, eachWay: true}, runners);
+
+    assert.equal(80, result.totalStake, "Expect total stake to be 80");
+    assert.equal(80, result.returns, "Expect return to be 80");
+    assert.equal(0, result.profit, "Expect profit to be 0");
+
+    assert.end();
+});
+
+test("Each Way Trixie Part Void", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/6", position: 2},
+        {odds: "2/1", terms: "1/4", position: -1}
+    ];
+
+    const result = betcruncher({type: "trixie", stake: 10, eachWay: true}, runners);
+
+    assert.equal(80, result.totalStake, "Expect total stake to be 80");
+    assert.equal(65, result.returns, "Expect return to be 65");
+    assert.equal(-15, result.profit, "Expect profit to be -15");
+
+    assert.end();
+});
+
+
 // And now we have to do all the same again, for the bet types below.
 
-// Trixie
 // Yankee
+test("Yankee", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "4/1", terms: "1/4", position: 1},
+        {odds: "3/1", terms: "1/4", position: 1},
+        {odds: "2/1", terms: "1/4", position: 1},
+        {odds: "2/1", terms: "1/4", position: 1}
+    ];
+
+    const result = betcruncher({type: "yankee", stake: 12, eachWay: false}, runners);
+
+    assert.equal(132, result.totalStake, "Expect total stake to be 132");
+    assert.equal(5568.00, result.returns, "Expect return to be 5568.00");
+    assert.equal(5436.00, result.profit, "Expect profit to be 5436.00");
+    assert.end();
+});
+
+test("Yankee Loser", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: 0},
+        {odds: "6/1", terms: "1/4", position: 1},
+        {odds: "6/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/4", position: 0}
+    ];
+
+    const result = betcruncher({type: "yankee", stake: 5, eachWay: false}, runners);
+
+    assert.equal(55, result.totalStake, "Expect total stake to be 55");
+    assert.equal(245.00, result.returns, "Expect return to be 245");
+    assert.equal(190, result.profit, "Expect profit to be 190");
+
+    assert.end();
+});
+
+test("Yankeee Void", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1}
+    ];
+
+    const result = betcruncher({type: "yankee", stake: 10, eachWay: false}, runners);
+
+    assert.equal(110, result.totalStake, "Expect total stake to be 110");
+    assert.equal(110, result.returns, "Expect return to be 110");
+    assert.equal(0, result.profit, "Expect profit to be 0");
+
+    assert.end();
+});
+
+test("Yankee Part Void", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: 1},
+        {odds: "2/1", terms: "1/4", position: 1}
+    ];
+
+    const result = betcruncher({type: "yankee", stake: 12, eachWay: false}, runners);
+
+    assert.equal(132, result.totalStake, "Expect total stake to be 132");
+    assert.equal(840, result.returns, "Expect return to be 840");
+    assert.equal(708, result.profit, "Expect profit to be 708");
+
+    assert.end();
+});
+
+
+test("Each Way Yankee", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "75/1", terms: "1/4", position: 1},
+        {odds: "2/1", terms: "1/5", position: 1},
+        {odds: "10/3", terms: "1/5", position: 1},
+        {odds: "20/1", terms: "1/6", position: 1}
+    ];
+
+    const result = betcruncher({type: "yankee", stake: 2, eachWay: true}, runners);
+
+    assert.equal(44, result.totalStake, "Expect total stake to be 80");
+    assert.equal(73426.90, result.returns, "Expect return to be 73426.90");
+    assert.equal(73382.90, result.profit, "Expect profit to be 73382.90");
+
+    assert.end();
+});
+
+test("Each Way Yankee Loser", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: 0},
+        {odds: "4/1", terms: "1/5", position: 1},
+        {odds: "7/2", terms: "1/5", position: 0},
+        {odds: "1/2", terms: "1/6", position: 1}
+    ];
+
+    const result = betcruncher({type: "yankee", stake: 7, eachWay: true}, runners);
+
+    assert.equal(154, result.totalStake, "Expect total stake to be 154.00");
+    assert.equal(66.15, result.returns, "Expect return to be 66.15");
+    assert.equal(-87.85, result.profit, "Expect profit to be -87.85");
+
+    assert.end();
+});
+
+test("Each Way Yankee Void", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "2/1", terms: "1/4", position: -1}
+    ];
+
+    const result = betcruncher({type: "yankee", stake: 1, eachWay: true}, runners);
+
+    assert.equal(22, result.totalStake, "Expect total stake to be 22");
+    assert.equal(22, result.returns, "Expect return to be 22");
+    assert.equal(0, result.profit, "Expect profit to be 0");
+
+    assert.end();
+});
+
+test("Each Way Yankee Part Void", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "3/1", terms: "1/6", position: 2},
+        {odds: "3/1", terms: "1/6", position: 2},
+        {odds: "2/1", terms: "1/4", position: -1}
+    ];
+
+    const result = betcruncher({type: "yankee", stake: 13.50, eachWay: true}, runners);
+
+    assert.equal(297.00, result.totalStake, "Expect total stake to be 297");
+    assert.equal(531.56, result.returns, "Expect return to be 531.56");
+    assert.equal(234.56, result.profit, "Expect profit to be 234.56");
+
+    assert.end();
+});
+
 // Super Yankee
+
+test("Super Yankee", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "4/1", terms: "1/4", position: 1},
+        {odds: "2/1", terms: "1/4", position: 1},
+        {odds: "10/7", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/4", position: 1},
+        {odds: "3/1", terms: "1/4", position: 1}
+    ];
+
+    const result = betcruncher({type: "superyankee", stake: 2.60, eachWay: false}, runners);
+
+    assert.equal(67.60, result.totalStake, "Expect total stake to be 67.60");
+    assert.equal(6365.17, result.returns, "Expect return to be 6365.17");
+    assert.equal(6297.57, result.profit, "Expect profit to be 6297.57");
+    assert.end();
+});
+
+test("Super Yankee Loser", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "10/3", terms: "1/4", position: 0},
+        {odds: "2/1", terms: "1/4", position: 1},
+        {odds: "8/1", terms: "1/4", position: 1},
+        {odds: "9/2", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/4", position: 0}
+    ];
+
+    const result = betcruncher({type: "superyankee", stake: 6.66, eachWay: false}, runners);
+
+    assert.equal(173.16, result.totalStake, "Expect total stake to be 173.16");
+    assert.equal(1608.39, result.returns, "Expect return to be 1608.39");
+    assert.equal(1435.23, result.profit, "Expect profit to be 1435.23");
+
+    assert.end();
+});
+
+test("Super Yankee Void", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1}
+    ];
+
+    const result = betcruncher({type: "superyankee", stake: 2.33, eachWay: false}, runners);
+
+    assert.equal(60.58, result.totalStake, "Expect total stake to be 60.58");
+    assert.equal(60.58, result.returns, "Expect return to be 60.58");
+    assert.equal(0, result.profit, "Expect profit to be 0");
+
+    assert.end();
+});
+
+test("Super Yankee Part Void", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: 1},
+        {odds: "2/1", terms: "1/4", position: 1},
+        {odds: "2/1", terms: "1/4", position: 1}
+    ];
+
+    const result = betcruncher({type: "superyankee", stake: 2.33, eachWay: false}, runners);
+
+    assert.equal(60.58, result.totalStake, "Expect total stake to be 60.58");
+    assert.equal(715.31, result.returns, "Expect return to be 715.31");
+    assert.equal(654.73, result.profit, "Expect profit to be 654.73");
+
+    assert.end();
+});
+
+
+test("Each Way Super Yankee", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "4/1", terms: "1/6", position: 1},
+        {odds: "2/1", terms: "1/5", position: 1},
+        {odds: "14/3", terms: "1/4", position: 1},
+        {odds: "10/3", terms: "1/5", position: 1},
+        {odds: "21/1", terms: "1/6", position: 1}
+    ];
+
+    const result = betcruncher({type: "superyankee", stake: 21, eachWay: true}, runners);
+
+    assert.equal(1092.00, result.totalStake, "Expect total stake to be 1092");
+    assert.equal(417280.73, result.returns, "Expect return to be 417280.73");
+    assert.equal(416188.73, result.profit, "Expect profit to be 416188.73");
+
+    assert.end();
+});
+
+test("Each Way Super Yankee Loser", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: 0},
+        {odds: "4/1", terms: "1/5", position: 1},
+        {odds: "7/2", terms: "1/5", position: 0},
+        {odds: "7/2", terms: "1/5", position: 0},
+        {odds: "1/2", terms: "1/6", position: 1}
+    ];
+
+    const result = betcruncher({type: "superyankee", stake: 1, eachWay: true}, runners);
+
+    assert.equal(52, result.totalStake, "Expect total stake to be 52");
+    assert.equal(9.45, result.returns, "Expect return to be 9.45");
+    assert.equal(-42.55, result.profit, "Expect profit to be -42.55");
+
+    assert.end();
+});
+
+test("Each Way Super Yankee Void", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "2/1", terms: "1/4", position: -1}
+    ];
+
+    const result = betcruncher({type: "superyankee", stake: 2, eachWay: true}, runners);
+
+    assert.equal(104, result.totalStake, "Expect total stake to be 22");
+    assert.equal(104, result.returns, "Expect return to be 22");
+    assert.equal(0, result.profit, "Expect profit to be 0");
+
+    assert.end();
+});
+
+test("Each Way Super Yankee Part Void", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "3/1", terms: "1/6", position: 2},
+        {odds: "3/1", terms: "1/6", position: 2},
+        {odds: "3/1", terms: "1/6", position: 2},
+        {odds: "3/1", terms: "1/4", position: -1}
+    ];
+
+    const result = betcruncher({type: "superyankee", stake: 4, eachWay: true}, runners);
+
+    assert.equal(208.00, result.totalStake, "Expect total stake to be 208.00");
+    assert.equal(395.25, result.returns, "Expect return to be 395.25");
+    assert.equal(187.25, result.profit, "Expect profit to be 187.25");
+
+    assert.end();
+});
+
 // Heinz
+test("Heinz", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "5/1", terms: "1/4", position: 1}
+    ];
+
+    const result = betcruncher({type: "heinz", stake: 1, eachWay: false}, runners);
+
+    assert.equal(57, result.totalStake, "Expect total stake to be 57");
+    assert.equal(117612.00, result.returns, "Expect return to be 117612.00");
+    assert.equal(117555.00, result.profit, "Expect profit to be 117555.00");
+    assert.end();
+});
+
+test("Heinz Loser", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "6/1", terms: "1/4", position: 1},
+        {odds: "5/1", terms: "1/4", position: 1},
+        {odds: "4/1", terms: "1/4", position: 1},
+        {odds: "3/1", terms: "1/4", position: 0},
+        {odds: "2/1", terms: "1/4", position: 0},
+        {odds: "6/1", terms: "1/4", position: 0}
+    ];
+
+    const result = betcruncher({type: "heinz", stake: 2.20, eachWay: false}, runners);
+
+    assert.equal(125.40, result.totalStake, "Expect total stake to be 125.40");
+    assert.equal(697.40, result.returns, "Expect return to be 697.40");
+    assert.equal(572, result.profit, "Expect profit to be 572");
+
+    assert.end();
+});
+
+test("Heinz Void", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/4", position: -1},
+        {odds: "4/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1}
+    ];
+
+    const result = betcruncher({type: "heinz", stake: 30, eachWay: false}, runners);
+
+    assert.equal(1710.00, result.totalStake, "Expect total stake to be 1710.00");
+    assert.equal(1710.00, result.returns, "Expect return to be 1710.00");
+    assert.equal(0, result.profit, "Expect profit to be 0");
+
+    assert.end();
+});
+
+test("Heinz Part Void", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: 0},
+        {odds: "2/1", terms: "1/4", position: 0},
+        {odds: "2/1", terms: "1/4", position: 0}
+    ];
+
+    const result = betcruncher({type: "heinz", stake: 6.11, eachWay: false}, runners);
+
+    assert.equal(348.27, result.totalStake, "Expect total stake to be 348.27");
+    assert.equal(24.44, result.returns, "Expect return to be 24.44");
+    assert.equal(-323.83, result.profit, "Expect profit to be -323.83");
+
+    assert.end();
+});
+
+
+test("Each Way Heinz", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "4/3", terms: "1/6", position: 1},
+        {odds: "4/1", terms: "1/6", position: 1},
+        {odds: "1/3", terms: "1/4", position: 1},
+        {odds: "12/3", terms: "1/5", position: 1},
+        {odds: "12/3", terms: "1/6", position: 1},
+        {odds: "2/1", terms: "1/5", position: 1}
+    ];
+
+    const result = betcruncher({type: "heinz", stake: 12, eachWay: true}, runners);
+
+    assert.equal(1368.00, result.totalStake, "Expect total stake to be 1368.00");
+    assert.equal(82904.75, result.returns, "Expect return to be 82904.75");
+    assert.equal(81536.75, result.profit, "Expect profit to be 81536.75");
+
+    assert.end();
+});
+
+test("Each Way Heinz Loser", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "16/1", terms: "1/5", position: 0},
+        {odds: "14/1", terms: "1/5", position: 1},
+        {odds: "12/2", terms: "1/5", position: 0},
+        {odds: "8/2", terms: "1/5", position: 0},
+        {odds: "4/2", terms: "1/5", position: 1},
+        {odds: "3/2", terms: "1/5", position: 0}
+    ];
+
+    const result = betcruncher({type: "heinz", stake: 6.11, eachWay: true}, runners);
+
+    assert.equal(696.54, result.totalStake, "Expect total stake to be 696.52");
+    assert.equal(307.46, result.returns, "Expect return to be 307.46");
+    assert.equal(-389.08, result.profit, "Expect profit to be -389.08");
+
+    assert.end();
+});
+
+test("Each Way Heinz Void", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "5/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "3/1", terms: "1/4", position: -1},
+        {odds: "2/1", terms: "1/4", position: -1}
+    ];
+
+    const result = betcruncher({type: "heinz", stake: 13, eachWay: true}, runners);
+
+    assert.equal(1482.00, result.totalStake, "Expect total stake to be 1482.00");
+    assert.equal(1482.00, result.returns, "Expect return to be 1482.00");
+    assert.equal(0, result.profit, "Expect profit to be 0");
+
+    assert.end();
+});
+
+test("Each Way Heinz Part Void", assert => {
+
+    assert.plan(3);
+
+    const runners = [
+        {odds: "7/2", terms: "1/4", position: -1},
+        {odds: "20/1", terms: "1/6", position: 2},
+        {odds: "4000/1", terms: "1/6", position: 2},
+        {odds: "2/1", terms: "1/6", position: 2},
+        {odds: "4/1", terms: "1/4", position: -1},
+        {odds: "9/5", terms: "1/4", position: -1}
+    ];
+
+    const result = betcruncher({type: "heinz", stake: 5, eachWay: true}, runners);
+
+    assert.equal(570.00, result.totalStake, "Expect total stake to be 570.00");
+    assert.equal(329480.74, result.returns, "Expect return to be 329480.74");
+    assert.equal(328910.74, result.profit, "Expect profit to be 328910.74");
+
+    assert.end();
+});
+
+
+
+
 // Super Heinz
 // Goliath
 
